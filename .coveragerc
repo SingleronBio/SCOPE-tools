@@ -1,0 +1,7 @@
+[report]
+omit =
+    setup.py
+    scopetools/__main__.py
+    scopetools/_version.py
+    versioneer.py
+    tests/*
