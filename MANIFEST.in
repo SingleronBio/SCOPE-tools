@@ -1,0 +1,2 @@
+include versioneer.py
+include scopetools/_version.py

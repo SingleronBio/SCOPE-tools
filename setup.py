@@ -12,7 +12,7 @@ setup(
     description="Single Cell Omics Preparation Entity Tools",
     author="luyang",
     author_email='luyang@singleronbio.com',
-    url='https://github.com/luyangatsingleronbio/scopetools',
+    url='https://bitbucket.org/luyangatsingleronbio/scopetools',
     packages=['scopetools'],
     entry_points={
         'console_scripts': [
@@ -22,7 +22,6 @@ setup(
     install_requires=requirements,
     keywords='scopetools',
     classifiers=[
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.6',
     ]
 )
