@@ -3,6 +3,8 @@
 
 import click
 import re
+import logging
+import sys
 
 
 class BarcodeType(click.ParamType):
@@ -109,3 +111,38 @@ class MutuallyExclusiveOption(click.Option):
             )
 
         return super(MutuallyExclusiveOption, self).handle_parse_result(ctx, opts, args)
+
+
+class SingleLevelFilter(logging.Filter):
+    """
+    reject is True, only include passlevel message
+    reject is False, exclude passlevel message
+    """
+
+    def __init__(self, passlevel: int, reject: bool):
+        super().__init__()
+        self.passlevel = passlevel
+        self.reject = reject
+
+    def filter(self, record):
+        if self.reject:
+            return record.levelno != self.passlevel
+        else:
+            return record.levelno == self.passlevel
+
+
+def getlogger(name):
+    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    data_fmt = '%Y-%M-%D %H:%M:%S'
+    formatter = logging.Formatter(log_fmt, data_fmt)
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    stdout = logging.StreamHandler(sys.stdout)
+    stdout.setFormatter(formatter)
+    stdout.addFilter(SingleLevelFilter(logging.INFO, False))
+    logger.addHandler(stdout)
+    stderr = logging.StreamHandler(sys.stderr)
+    stderr.setFormatter(formatter)
+    stderr.addFilter(SingleLevelFilter(logging.WARN, False))
+    logger.addHandler(stderr)
+    return logger
