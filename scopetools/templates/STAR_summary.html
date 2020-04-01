@@ -1,0 +1,29 @@
+      <h2><img data-name="img1" src="./img1.png"/>Mapping summary</h2>
+      <p class="table_title" style="font-weight: bold">所有样本Read2比对统计如下：</p>
+      <table id="example2" class="display" style="width:100%">
+        {% for item in STAR_summary %}
+          {% if loop.first %}
+        <thead>
+          <tr>
+            {% for i in item %} 
+            <th>{{ i|e }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+          {% else %}
+        <tbody>
+          <tr>
+            {% for i in item %}
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+        </tbody>
+          {% endif %}
+        {% endfor %}
+      </table>
+      <div class="annotation">
+      <p>(1) SampleName：样品名</p>
+      <p>(2) Uniquely_mapped：在参考序列上有唯一比对位置的测序序列的数量及比例</p>
+      <p>(3) Multiple_mapped：在参考序列上有多个比对位置的测序序列的数量及比例</p>
+      <p>(4) Unmapped：未能比对到参考序列上的测序序列的数量及比例</p>
+      </div>
