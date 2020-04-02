@@ -16,7 +16,7 @@ build:
   # "skip: True  # [not win]" to limit to Windows.
   script: python setup.py install --single-version-externally-managed --record=record.txt
   entry_points:
-    - scopetools = scopetools.scope:cli
+    - scope = scopetools.cli:cli
 
 extra:
   channels:
@@ -25,21 +25,21 @@ extra:
 
 requirements:
   build:
-    - python ==3.6
+    - python
     - setuptools
   run:
-    - python ==3.6
-    - star ==2.7.0b
+    - python
+    - star
     - fastqc
     - picard
     - cutadapt
+    - ucsc-gtftogenepred
     - subread
     - samtools
     - pysam
     - scipy
     - numpy
     - pandas
-    - xopen
     - jinja2
     - matplotlib
     - click

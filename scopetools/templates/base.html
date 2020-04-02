@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1" />
+  <script> {% include "./js/jquery.min.js" %} </script>
+  <style> {% include "./css/bootstrap.min.css" %} </style>
+  <script> {% include "./js/bootstrap.min.js" %} </script>
+  <script> {% include "./js/plotly-latest.min.js" %} </script>
+  <style> {% include "./css/jquery.dataTables.css" %} </style>
+  <script> {% include "./js/jquery.dataTables.js" %} </script>
+  <script> 
+    $(document).ready(
+      function() {
+        $.extend( $.fn.dataTable.defaults, {
+          searching: false,
+          ordering: true,
+          paging: false,
+          info: false,
+          scrollX: 300,
+          scrollCollapse: true,
+          columnDefs: [
+            {
+              targets: '_all',
+              className: 'dt-left'
+            }
+          ],
+        });
+        $('#example0').DataTable();
+        $('#example1').DataTable();
+        $('#example2').DataTable();
+        $('#example3').DataTable();
+        $('#example4').DataTable();
+
+        var img1=$("img[data-name='img1']");
+        for (x of img1) {
+            x.src={% include "img1.html" %};
+        }
+      }
+  );
+  </script> 
+  <style>
+    * {
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+    .placeholder {
+      height: 1px;
+      margin-top: 52px;
+      margin-bottom: 24px;
+    }
+    .tab {
+      margin: 0 auto;
+      padding: 0;
+      width: 1000px;
+    }
+    .logo-container {
+      height: 50px;
+      width: 200px;
+      position: relative;
+    }
+    .logo {
+      position: absolute;
+      height: 50px;
+    }
+    .annotation {
+      margin-top: 25px;
+    }
+    .annotation p {
+      text-align: left;
+      margin-top: 0px;
+      margin-bottom: 0px;
+      line-height: 16px!important;
+      font-size: 14px !important;
+    }
+    thead th {
+      color: #337bb6;
+    }
+    h2 {
+      text-align: left;
+      font-size: 18px;
+      margin-top: 25px;
+      margin-bottom: 25px;
+      letter-spacing: 2px;
+      line-height: 20px;
+      font-weight: bold;
+    }
+    h2 img {
+      width: 22px;
+      margin-right: 10 px;
+    }
+    .center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      width: 50%;
+    }
+
+  </style>
+</head>
+<body>
+  <header class="navbar navbar-fixed-top" style="background: #ffffff">
+    <div class="navbar-brand">
+      <!-- <div class="logo-container">
+        <img class="logo" src="data:image/png;base64,{{logo_img}}">
+      <!-- </div> -->
+          {% include "logo.html"%}
+    </div>
+  </header>
+  <div class="placeholder"></div>
+  <div class="container">
+    <div class="tab">
+
+      <h1 align="center">scRNA-Seq Summary </h1>
+      {% if barcode_summary is defined %}
+      {% include "barcode_summary.html"%}
+      {% endif %}
+
+      {% if cutadapt_summary is defined %}
+      {% include "cutadapt_summary.html"%}
+      {% endif %}
+
+      {% if STAR_summary is defined %}
+      {% include "STAR_summary.html"%}
+      {% endif %}
+
+      {% if featureCounts_summary is defined%}
+      {% include "featureCounts_summary.html"%}
+      {% endif %}
+
+      {% if umi_summary is defined %}
+      {% include "umi_summary.html"%}
+      {% endif %}
+
+      {% if umicount_distribution is defined %}
+      {% include "umicount_distribution_summary.html"%}
+      {% endif %}
+    </div>
+  </div>
+
+</body>
+</html>

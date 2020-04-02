@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
-
-
 import click
 import re
 import logging
 import sys
+import subprocess
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 
 class BarcodeType(click.ParamType):
     name = "barcode pattern"
 
     def convert(self, value, param, ctx):
-        p = re.compile(r'([CLTU]\d+)+')
-        if re.fullmatch(p, value):
+        if re.fullmatch(r'([CLNTU]\d+)+', value):
             return value
         else:
-            click.echo('fail')
+            # click.echo('fail')
             raise click.BadParameter("{} is not a valid adapter pattern".format(value))
 
 
@@ -34,7 +34,7 @@ class AdapterType(click.ParamType):
         a{18}
         agatcagatcagatc
         """
-        poly_pattern = re.compile(r'(^[ATCGatcg]{\d+})+$')
+        poly_pattern = re.compile(r'([ATCGatcg]{\d+})+')
         p5_pattern = re.compile(r'(^[ATCGatcg]+)$')
         adapters = []
         for i in value:
@@ -126,20 +126,53 @@ class SingleLevelFilter(logging.Filter):
 
     def filter(self, record):
         if self.reject:
-            return record.levelno != self.passlevel
+            return record.levelno <= self.passlevel
         else:
-            return record.levelno == self.passlevel
+            return record.levelno >= self.passlevel
 
 
-def getlogger(name):
+class CommandWrapper(object):
+    def __init__(self, command: str, logger: logging.Logger):
+        self.command = command
+        self.logger = logger
+        self.p: subprocess.Popen = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, bufsize=0, universal_newlines=True)
+        self.returncode: int = 0
+        self.stdout = ''
+        self.run_cmd()
+
+    def stdout_pipe(self, pipe_name='stdout'):
+        while self.p.poll() is None:
+            line = getattr(self.p, pipe_name).readline()
+            stdout = line.strip()
+            if stdout:
+                self.logger.info(stdout)
+                self.stdout += line
+
+    def stderr_pipe(self, pipe_name='stderr'):
+        while self.p.poll() is None:
+            line = getattr(self.p, pipe_name).readline()
+            stderr = line.strip()
+            if stderr:
+                self.logger.warning(stderr)
+
+    def run_cmd(self):
+        with ThreadPoolExecutor(2) as pool:
+            stdout = pool.submit(self.stdout_pipe, 'stdout')
+            stderr = pool.submit(self.stderr_pipe, 'stderr')
+            stdout.result()
+            stderr.result()
+            self.returncode = self.p.returncode
+
+
+def getlogger(name=__name__):
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    data_fmt = '%Y-%M-%D %H:%M:%S'
+    data_fmt = '%y-%m-%d %H:%M:%S'
     formatter = logging.Formatter(log_fmt, data_fmt)
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     stdout = logging.StreamHandler(sys.stdout)
     stdout.setFormatter(formatter)
-    stdout.addFilter(SingleLevelFilter(logging.INFO, False))
+    stdout.addFilter(SingleLevelFilter(logging.INFO, True))
     logger.addHandler(stdout)
     stderr = logging.StreamHandler(sys.stderr)
     stderr.setFormatter(formatter)

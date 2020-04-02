@@ -1,0 +1,30 @@
+      <h2><img data-name="img1" src="./img1.png"/>Feature summary</h2>
+      <p>所有样本Read2的featureCounts统计如下：</p>
+      <table id="example3" class="display" style="width:100%">
+        {% for item in featureCounts_summary %}
+          {% if loop.first %}
+        <thead>
+          <tr>
+            {% for i in item %} 
+            <th>{{ i|e }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+          {% else %}
+        <tbody>
+          <tr>
+            {% for i in item %}
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+        </tbody>
+          {% endif %}
+        {% endfor %}
+      </table>
+
+      <div class="annotation">
+      <p>(1) SampleName：样品名</p>
+      <p>(2) Assigned：定位到基因上的Reads数目及比例</p>
+      <p>(3) Unassigned_NoFeatures：未定位到基因上的reads数目及比例</p>
+      <p>(4) Unassigned_Ambiguity：定位在多个基因上的reads数目及比例</p>
+      </div>

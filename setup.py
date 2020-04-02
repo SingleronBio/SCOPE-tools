@@ -22,6 +22,9 @@ setup(
             'scopetools=scopetools.cli:cli'
         ]
     },
+    package_data={
+        'scopetools': ['extra/whitelist/scope/*', 'templates/*.html', 'templates/css/*.css', 'templates/img/*.png', 'templates/js/*.js']
+    },
     install_requires=requirements,
     keywords='scopetools',
     classifiers=[

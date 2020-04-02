@@ -1,0 +1,35 @@
+      <h2><img data-name="img1" src="./img1.png"/>Barcode summary</h2>
+      <p class="table_title" style="font-weight: bold">所有样本的barcode统计如下：</p>
+      <table id="example0" class="display" style="width:100%">
+        {% for item in barcode_summary %}
+          {% if loop.first %}
+        <thead>
+          <tr>
+            {% for i in item %} 
+            <th>{{ i|e }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+          {% else %}
+        <tbody>
+          <tr>
+            {% for i in item %}
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+        </tbody>
+          {% endif %}
+        {% endfor %}
+      </table>
+      <div class="annotation">
+      <p>(1) SampleName：样品名</p>
+      <p>(2) Number of Reads：数据中的总Reads数</p>
+      <p>(3) Valid Reads：通过过滤的Reads数据</p>
+      <p>(4) Valid Barcodes：通过过滤的Reads中的Barcode数目</p>
+      <p>(5) Q30 of Barocdes：Barocdes序列的Q30</p>
+      <p>(6) Q30 of UMIs：UMIs序列的Q30</p>
+      <p>(7) Reads without polyT：Read1序列中不包含polyT的Reads数目</p>
+      <p>(8) Reads with lowQual：Barocde和UMI序列中包含2个及以上碱基质量值低于14的Reads数目</p>
+      <p>(9) Reads without linker：Read1序列中不包含Barcode的Reads数目</p>
+      <p>(10) Reads without Barcode：Read1序列中不包含Barcode的Reads数目</p>
+      </div>
