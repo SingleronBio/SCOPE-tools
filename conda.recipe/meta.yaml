@@ -2,8 +2,7 @@
 {% set data = load_setup_py_data() %}
 
 package:
-  name: scopetools
-  
+  name: scope-tools
   version: {{ data['version'] }}
 
 source:
@@ -14,9 +13,12 @@ build:
   # separate bld.bat and build.sh files instead of this key.  Add the line
   # "skip: True  # [py<35]" (for example) to limit to Python 3.5 and newer, or
   # "skip: True  # [not win]" to limit to Windows.
-  script: python setup.py install --single-version-externally-managed --record=record.txt
+  script: {{ PYTHON }} -m pip install --no-deps --ignore-installed -vv .
+  noarch: python
   entry_points:
-    - scope = scopetools.cli:cli
+    {% for entry in data['entry_points']['console_scripts'] %}
+      - {{ entry.split('=')[0].strip() }} = {{ entry.split('=')[1].strip() }}
+    {% endfor %}
 
 extra:
   channels:
@@ -24,25 +26,17 @@ extra:
     - bioconda
 
 requirements:
-  build:
+  host:
     - python
-    - setuptools
+    - pip
   run:
     - python
     - star
     - fastqc
     - picard
-    - cutadapt
     - ucsc-gtftogenepred
     - subread
     - samtools
-    - pysam
-    - scipy
-    - numpy
-    - pandas
-    - jinja2
-    - matplotlib
-    - click
     # dependencies are defined in setup.py
     {% for dep in data['install_requires'] %}
     - {{ dep.lower() }}
@@ -59,5 +53,7 @@ test:
     - pytest tests
 
 about:
-  home: https://bitbucket.org/luyangatsingleronbio/scopetools
-  summary: Single Cell Omics Preparation Entity Tools
+  home: https://github.com/luyang93/SCOPE-tools
+  summary: Single Cell Omics Preparation Entity tools
+  license: {{ data['license'] }}
+  license_file: LICENSE
