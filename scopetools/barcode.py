@@ -103,99 +103,58 @@ class MisSeq(object):
 
 class Sequence(object):
 
-    def __init__(self,
-                 seq1: pysam.FastxRecord,
-                 seq2: pysam.FastxRecord,
-                 barcode_pattern: BarcodePattern,
-                 linkers_dict: List[MisSeq],
-                 cell_dict: MisSeq):
-        """
-
-        :param seq1:
-        :param seq2:
-        :param barcode_pattern:
-        :param linkers_dict:
-        :param cell_dict:
-        """
+    def __init__(
+            self,
+            seq1: pysam.FastxRecord,
+            seq2: pysam.FastxRecord,
+            barcode_pattern: BarcodePattern,
+            lowqual: int,
+            lownum: int
+    ):
         self.seq1 = seq1
         self.seq2 = seq2
         self.barcode_pattern = barcode_pattern
-        self.linkers_dict = linkers_dict
-        self.cell_dict = cell_dict
-        self._cell = ''
+        self.lowqual = lowqual
+        self.lownum = lownum
+        self.stat_info = {}
 
-    @property
-    def linkers(self):
-        linkers = []
-        for start, end in zip(self.barcode_pattern['L'].start, self.barcode_pattern['L'].end):
-            linkers.append(self.seq1.sequence[start:end])
-        return linkers
-
-    @property
+    @cached_property
     def polyt(self):
         polyt = []
         for start, end in zip(self.barcode_pattern['T'].start, self.barcode_pattern['T'].end):
             polyt.append(self.seq1.sequence[start:end])
         return polyt
 
-    @property
+    @cached_property
     def cell(self):
         cell = []
         for start, end in zip(self.barcode_pattern['C'].start, self.barcode_pattern['C'].end):
             cell.append(self.seq1.sequence[start:end])
         return cell
 
-    @property
+    @cached_property
     def cell_quality(self):
         cell_quality = []
         for start, end in zip(self.barcode_pattern['C'].start, self.barcode_pattern['C'].end):
             cell_quality[-1:-1] = [ord(q) - 33 for q in self.seq1.quality[start:end]]
         return cell_quality
 
-    @property
+    @cached_property
     def umi(self):
         umi = []
         for start, end in zip(self.barcode_pattern['U'].start, self.barcode_pattern['U'].end):
             umi.append(self.seq1.sequence[start:end])
         return ''.join(umi)
 
-    @property
+    @cached_property
     def umi_quality(self):
         umi_quality = []
         for start, end in zip(self.barcode_pattern['U'].start, self.barcode_pattern['U'].end):
             umi_quality[-1:-1] = [ord(q) - 33 for q in self.seq1.quality[start:end]]
         return umi_quality
 
-    @property
-    def corrected_cell(self):
-        if 'L' in self.barcode_pattern:
-            return self._cell
-        else:
-            return ''.join(self.cell)
-
-    @property
-    def corrected_num(self):
-        corrected_num = 0
-        for cell in self.cell:
-            if cell in self.cell_dict:
-                self._cell += self.cell_dict[cell][0]
-                if self.cell_dict[cell][1] == -1:
-                    corrected_num += 0
-                else:
-                    corrected_num += 1
-                    logger.warning(f"cell barcode {cell} is corrected as {self.cell_dict[cell][0]}")
-            else:
-                corrected_num += -100
-        return corrected_num
-
-    def is_low_quality(self, lowqual: int, lownum: int):
-        """
-
-        :param lowqual:
-        :param lownum:
-        :return:
-        """
-        return True if sum(q < lowqual for q in self.cell_quality + self.umi_quality) > lownum else False
+    def is_low_quality(self):
+        return True if sum(q < self.lowqual for q in self.cell_quality + self.umi_quality) > self.lownum else False
 
     def is_no_polyt(self, strict_t: int = 0, min_t: int = 10):
         """
@@ -212,6 +171,106 @@ class Sequence(object):
             ]
         )
 
+    def correct_seq(self):
+        pass
+
+
+class SCOPEv1(Sequence):
+
+    def __init__(self, *args, **kwargs):
+        super(SCOPEv1, self).__init__(*args, **kwargs)
+        self.rna_sequence = self.correct_seq()
+
+    @cached_property
+    def corrected_cell(self):
+        return ''.join(self.cell)
+
+    def is_no_polyt(self, strict_t: int = 0, min_t: int = 25):
+        """
+
+        :param strict_t:
+        :param min_t:
+        :return:
+        """
+        polyt = ''.join(self.polyt)
+        return any(
+            [
+                polyt[:strict_t].count('T') < strict_t,
+                polyt.count('T') < min_t
+            ]
+        )
+
+    def is_no_cell(self):
+        return ''.join(self.cell).startswith('N')
+
+    def correct_seq(self):
+        if self.is_no_polyt():
+            SEQ_INFO.no_polyt_num += 1
+            return None
+
+        if self.is_low_quality():
+            SEQ_INFO.lowqual_num += 1
+            return None
+
+        if self.is_no_cell():
+            SEQ_INFO.no_cell_num += 1
+            return None
+
+        SEQ_INFO.cell_dict[self.corrected_cell] += 1
+
+        # new readID: @barcode_umi_old readID
+        rna_sequence = pysam.pysam.FastxRecord()
+        rna_sequence.name = f'{self.corrected_cell}_{self.umi}_{self.seq2.name}'
+        rna_sequence.sequence = self.seq2.sequence
+        rna_sequence.quality = self.seq2.quality
+        SEQ_INFO.clean_num += 1
+        return rna_sequence
+
+
+class SCOPEv2(Sequence):
+
+    def __init__(
+            self,
+            linkers_dict: List[MisSeq],
+            cell_dict: MisSeq,
+            *args,
+            **kwargs
+    ):
+        super(SCOPEv2, self).__init__(*args, **kwargs)
+        self.linkers_dict = linkers_dict
+        self.cell_dict = cell_dict
+        self._cell = ''
+        self.rna_sequence = self.correct_seq()
+
+    @cached_property
+    def linkers(self):
+        linkers = []
+        for start, end in zip(self.barcode_pattern['L'].start, self.barcode_pattern['L'].end):
+            linkers.append(self.seq1.sequence[start:end])
+        return linkers
+
+    @cached_property
+    def corrected_cell(self):
+        if 'L' in self.barcode_pattern:
+            return self._cell
+        else:
+            return ''.join(self.cell)
+
+    @cached_property
+    def corrected_num(self):
+        corrected_num = 0
+        for cell in self.cell:
+            if cell in self.cell_dict:
+                self._cell += self.cell_dict[cell][0]
+                if self.cell_dict[cell][1] == -1:
+                    corrected_num += 0
+                else:
+                    corrected_num += 1
+                    logger.warning(f"cell barcode {cell} is corrected as {self.cell_dict[cell][0]}")
+            else:
+                corrected_num += -100
+        return corrected_num
+
     def is_no_linker(self):
         return any(
             [
@@ -225,8 +284,50 @@ class Sequence(object):
         else:
             return False
 
+    def correct_seq(self):
+        if self.is_no_polyt():
+            SEQ_INFO.no_polyt_num += 1
+            return None
 
-def barcode(ctx, fq1, fq2, sample, outdir, pattern, whitelist, linkers, lowqual, lownum):
+        if self.is_low_quality():
+            SEQ_INFO.lowqual_num += 1
+            return None
+
+        if self.is_no_linker():
+            SEQ_INFO.no_linker_num += 1
+            return None
+
+        if self.is_no_cell():
+            SEQ_INFO.no_cell_num += 1
+            return None
+
+        if self.corrected_num > 0:
+            SEQ_INFO.cell_corrected_num += 1
+            return None
+
+        SEQ_INFO.cell_dict[self.corrected_cell] += 1
+
+        # new readID: @barcode_umi_old readID
+        rna_sequence = pysam.pysam.FastxRecord()
+        rna_sequence.name = f'{self.corrected_cell}_{self.umi}_{self.seq2.name}'
+        rna_sequence.sequence = self.seq2.sequence
+        rna_sequence.quality = self.seq2.quality
+        SEQ_INFO.clean_num += 1
+        return rna_sequence
+
+
+def barcode(
+        ctx,
+        fq1=None,
+        fq2=None,
+        sample=None,
+        outdir=None,
+        pattern=None,
+        lowqual=None,
+        lownum=None,
+        whitelist=None,
+        linkers=None
+):
     """
 
     :param ctx:
@@ -243,7 +344,6 @@ def barcode(ctx, fq1, fq2, sample, outdir, pattern, whitelist, linkers, lowqual,
     """
     logger.info('Extract barcode start!')
     barcode_pattern = BarcodePattern(pattern)
-    seq_info = SeqInfo()
 
     cell_len, umi_len = 0, 0
     for start, end in zip(barcode_pattern['C'].start, barcode_pattern['C'].end):
@@ -260,50 +360,32 @@ def barcode(ctx, fq1, fq2, sample, outdir, pattern, whitelist, linkers, lowqual,
     sample_outdir = Path(outdir, sample, '01.barcode')
     sample_outdir.mkdir(parents=True, exist_ok=True)
     clean_fastq = sample_outdir / f'{sample}_2.fq.gz'
+
     with pysam.FastxFile(fq1) as f1, pysam.FastxFile(fq2) as f2, gzip.open(clean_fastq, mode='wt', encoding='utf-8') as f:
         for seq1, seq2 in zip(f1, f2):
             if seq1.name == seq2.name:
-                seq_info.total_num += 1
+                SEQ_INFO.total_num += 1
             else:
                 logger.warning(f"{fq1} and {fq2} are not compatible")
                 sys.exit(1)
 
-            sequence = Sequence(seq1, seq2, barcode_pattern, linkers_dict, cell_dict)
-            if 'T' in barcode_pattern:
-                if sequence.is_no_polyt():
-                    seq_info.no_polyt_num += 1
-                    continue
+            sequence = SCOPEv2(
+                seq1=seq1,
+                seq2=seq2,
+                lownum=lownum,
+                lowqual=lowqual,
+                barcode_pattern=barcode_pattern,
+                linkers_dict=linkers_dict,
+                cell_dict=cell_dict
+            )
+            if sequence.rna_sequence:
+                f.write(f'{sequence.rna_sequence}\n')
 
-            if sequence.is_low_quality(lowqual=lowqual, lownum=lownum):
-                seq_info.lowqual_num += 1
-                continue
+                for position, quality in enumerate(sequence.cell_quality + sequence.umi_quality):
+                    cell_umi_quality_array[position, quality] += 1
 
-            if sequence.is_no_linker():
-                seq_info.no_linker_num += 1
-                continue
-
-            if sequence.is_no_cell():
-                seq_info.no_cell_num += 1
-                continue
-
-            if sequence.corrected_num > 0:
-                seq_info.cell_corrected_num += 1
-
-            seq_info.cell_dict[sequence.corrected_cell] += 1
-
-            # new readID: @barcode_umi_old readID
-            rna_sequence = pysam.FastxRecord()
-            rna_sequence.name = f'{sequence.corrected_cell}_{sequence.umi}_{seq2.name}'
-            rna_sequence.sequence = seq2.sequence
-            rna_sequence.quality = seq2.quality
-            f.write(f'{rna_sequence}\n')
-            seq_info.clean_num += 1
-
-            for position, quality in enumerate(sequence.cell_quality + sequence.umi_quality):
-                cell_umi_quality_array[position, quality] += 1
-
-            for position, base in enumerate(''.join(sequence.cell) + sequence.umi):
-                cell_umi_base_array[position, base_dict[base]] += 1
+                for position, base in enumerate(''.join(sequence.cell) + sequence.umi):
+                    cell_umi_base_array[position, base_dict[base]] += 1
 
     # stat
     cell_q30 = cell_umi_quality_array[:cell_len, 30:].sum() / cell_umi_quality_array[:cell_len].sum()
@@ -317,15 +399,15 @@ def barcode(ctx, fq1, fq2, sample, outdir, pattern, whitelist, linkers, lowqual,
             },
             {
                 'attr': 'Number of Reads',
-                'val': seq_info.total_num,
+                'val': SEQ_INFO.total_num,
             },
             {
                 'attr': 'Valid Reads',
-                'val': f'{seq_info.clean_num} ({seq_info.clean_num / seq_info.total_num:.2%})',
+                'val': f'{SEQ_INFO.clean_num} ({SEQ_INFO.clean_num / SEQ_INFO.total_num:.2%})',
             },
             {
                 'attr': 'Valid Barcodes',
-                'val': len(seq_info.cell_dict),
+                'val': len(SEQ_INFO.cell_dict),
             },
             {
                 'attr': 'Q30 of Barcodes',
@@ -337,23 +419,23 @@ def barcode(ctx, fq1, fq2, sample, outdir, pattern, whitelist, linkers, lowqual,
             },
             {
                 'attr': 'Reads without polyT',
-                'val': f'{seq_info.no_polyt_num} ({seq_info.no_polyt_num / seq_info.total_num:.2%})',
+                'val': f'{SEQ_INFO.no_polyt_num} ({SEQ_INFO.no_polyt_num / SEQ_INFO.total_num:.2%})',
             },
             {
                 'attr': 'Reads with lowQual',
-                'val': f'{seq_info.lowqual_num} ({seq_info.lowqual_num / seq_info.total_num:.2%})',
+                'val': f'{SEQ_INFO.lowqual_num} ({SEQ_INFO.lowqual_num / SEQ_INFO.total_num:.2%})',
             },
             {
                 'attr': 'Reads without linker',
-                'val': f'{seq_info.no_linker_num} ({seq_info.no_linker_num / seq_info.total_num:.2%})',
+                'val': f'{SEQ_INFO.no_linker_num} ({SEQ_INFO.no_linker_num / SEQ_INFO.total_num:.2%})',
             },
             {
                 'attr': 'Reads without Barcode',
-                'val': f'{seq_info.no_cell_num} ({seq_info.no_cell_num / seq_info.total_num:.2%})',
+                'val': f'{SEQ_INFO.no_cell_num} ({SEQ_INFO.no_cell_num / SEQ_INFO.total_num:.2%})',
             },
             {
                 'attr': 'Reads with corrected Barcode',
-                'val': f'{seq_info.cell_corrected_num} ({seq_info.cell_corrected_num / seq_info.total_num:.2%})'
+                'val': f'{SEQ_INFO.cell_corrected_num} ({SEQ_INFO.cell_corrected_num / SEQ_INFO.total_num:.2%})'
             }
         ]
         json.dump(stat_info, f)

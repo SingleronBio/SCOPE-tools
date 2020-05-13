@@ -23,19 +23,40 @@ def cli():
 @click.option('--fq2', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="read2 fq file")
 @click.option('--sample', type=click.STRING, required=True, help="sample name")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), required=True, help="output dir")
-@click.option('--pattern', type=BarcodeType(), default='C8L16C8L16C8U8T18', show_default=True, help="read1 pattern, C: cellbarcode, L: linker, U: UMI, T: polyT")
-@click.option('--whitelist', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), default=Path(__file__).resolve().parent.joinpath('extra/whitelist/scope/bclist'), show_default=True, help="cell barcode list")
-@click.option('--linkers', multiple=True, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), default=[Path(__file__).resolve().parent.joinpath('extra/whitelist/scope/linker1'), Path(__file__).resolve().parent.joinpath('extra/whitelist/scope/linker2')], show_default=True, help="linkers")
+@click.option('--bctype', cls=MutuallyExclusiveOption, type=click.Choice(['SCOPEv2', 'SCOPEv1', '10X', 'Dropseq', 'inDrop', 'BD', 'other']), mutually_exclusive=['pattern', 'whitelist', 'linkers'], default=None, help='bctype help')
+@click.option('--pattern', cls=MutuallyExclusiveOption, type=BarcodeType(), mutually_exclusive=['bctype'], default=None, help="read1 pattern, C: cellbarcode, L: linker, U: UMI, T: polyT")
+@click.option('--whitelist', cls=MutuallyExclusiveOption, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), mutually_exclusive=['bctype'], default=None, help="cell barcode list")
+@click.option('--linkers', multiple=True, cls=MutuallyExclusiveOption, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), mutually_exclusive=['bctype'], default=None, help="linkers")
 @click.option('--lowQual', type=click.IntRange(0, 30), default=14, show_default=True, help="max phred of base as low quality")
 @click.option('--lowNum', type=click.INT, default=2, show_default=True, help="max number with low quality allowed")
 @click.pass_context
-def barcode_pipe(ctx, fq1, fq2, sample, outdir, pattern, whitelist, linkers, lowqual, lownum):
+def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linkers, lowqual, lownum):
     """
     extract barcode and umi description
     """
+    if bctype:
+        if bctype == 'SCOPEv2':
+            pattern = 'C8L16C8L16C8U8T18'
+            whitelist = Path(__file__).resolve().parent.joinpath(f'extra/whitelist/SCOPEv2/bclist')
+            linkers = [Path(__file__).resolve().parent.joinpath(f'extra/whitelist/SCOPEv2/{linker}') for linker in ['linker1', 'linker2']]
+        elif bctype == 'SCOPEv1':
+            pattern = 'C12U8T30'
+            whitelist = None
+            linkers = None
+        elif bctype == '10X':
+            pattern = 'C16U12T30'
+            whitelist = None
+            linkers = None
+    elif pattern:
+        l_num = pattern.count('L')
+        if l_num:
+            if len(linkers) != pattern.count('L'):
+                raise click.BadParameter("{} is not a valid adapter pattern".format(pattern))
+    else:
+        raise click.BadParameter("Error: Illegal usage: [bctype] or [pattern whitelist linkers] must have one")
     from scopetools.barcode import barcode
     click.echo('barcode pipeline')
-    barcode(ctx, fq1, fq2, sample, outdir, pattern, whitelist, linkers, lowqual, lownum)
+    barcode(ctx=ctx, fq1=fq1, fq2=fq2, sample=sample, outdir=outdir, pattern=pattern, whitelist=whitelist, linkers=linkers, lowqual=lowqual, lownum=lownum)
 
 
 @cli.command(name='cutadapt', short_help="cutadapt short help")
