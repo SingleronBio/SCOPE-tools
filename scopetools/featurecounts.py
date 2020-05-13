@@ -14,6 +14,37 @@ logger = getlogger(__name__)
 logger.setLevel(10)
 
 
+class GeneName(object):
+
+    def __init__(self, annot):
+        self.gtf_file = annot
+        self.id_name = defaultdict(str)
+        self.parse()
+
+    def parse(self):
+        gene_id_pattern = re.compile(r'gene_id "(\S+)";')
+        gene_name_pattern = re.compile(r'gene_name "(\S+)"')
+        with open(self.gtf_file) as f:
+            for line in f.readlines():
+                if line.startswith('#!'):
+                    continue
+                tabs = line.split('\t')
+                gtf_type, attributes = tabs[2], tabs[-1]
+                if gtf_type == 'gene':
+                    gene_id = gene_id_pattern.findall(attributes)[-1]
+                    gene_name = gene_name_pattern.findall(attributes)[-1]
+                    self.id_name[gene_id] = gene_name
+
+    def __contains__(self, item):
+        return item in self.id_name
+
+    def __getitem__(self, item):
+        if item in self.id_name:
+            return self.id_name[item]
+        else:
+            return item
+
+
 class FeatureCountsLogger(object):
     def __init__(self, log, sample):
         self.log = log
@@ -43,6 +74,29 @@ class FeatureCountsLogger(object):
                 )
 
 
+class Alignment(object):
+
+    def __init__(self, alignment: pysam.AlignedRead):
+        self.alignment = alignment
+        self.__gene_name = None
+
+    @property
+    def gene_id(self):
+        if self.alignment.has_tag('XT'):
+            return self.alignment.get_tag('XT')
+        else:
+            return None
+
+    @property
+    def gene_name(self):
+        return self.__gene_name
+
+    @gene_name.setter
+    def gene_name(self, value):
+        self.__gene_name = value
+        self.alignment.set_tag('XT', self.__gene_name)
+
+
 def featurecounts(ctx, input, annot, sample, outdir, format, nthreads):
     sample_outdir = Path(outdir, sample, '04.featureCounts')
     sample_outdir.mkdir(parents=True, exist_ok=True)
@@ -57,7 +111,7 @@ def featurecounts(ctx, input, annot, sample, outdir, format, nthreads):
     else:
         logger.info('featureCounts done!')
 
-        # samtools sort
+    # samtools sort
     samtools_cmd = f'samtools sort -n -@ {nthreads} -o {sample_outdir / sample}_name_sorted.bam {sample_outdir / Path(input).name}.featureCounts.bam'
     samtools_process = CommandWrapper(samtools_cmd, logger=logger)
     if samtools_process.returncode:
@@ -65,6 +119,17 @@ def featurecounts(ctx, input, annot, sample, outdir, format, nthreads):
         sys.exit(-1)
     else:
         logger.info('samtools done!')
+
+    # convert gene id to gene name in BAM
+    gene_name_dict = GeneName(annot)
+    with pysam.AlignmentFile(f'{sample_outdir / sample}_name_sorted.bam', mode='rb') as f, pysam.AlignmentFile(f'{sample_outdir / sample}_name_sorted.tmp.bam', mode='wb', template=f) as g:
+        for i in f:
+            alignment = Alignment(i)
+            if alignment.gene_id:
+                gene_name = gene_name_dict[alignment.gene_id]
+                alignment.gene_name = gene_name
+            g.write(alignment.alignment)
+    Path(f'{sample_outdir / sample}_name_sorted.tmp.bam').rename(f'{sample_outdir / sample}_name_sorted.bam')
 
     # parse log
     featurecounts_log = FeatureCountsLogger(log=f'{sample_outdir}/{sample}.summary', sample=sample)
