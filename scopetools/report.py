@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from pathlib import Path
 import json
+from pathlib import Path
+
 import pandas as pd
-from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
+from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 env = Environment(
     loader=FileSystemLoader(Path(__file__).parent / 'templates'),

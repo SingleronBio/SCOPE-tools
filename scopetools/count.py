@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
-from scopetools.utils import getlogger
+import json
 from collections import defaultdict
-import pandas as pd
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import pandas as pd
 from scipy.io import mmwrite
-from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix
+from scopetools.report import Reporter
+from scopetools.utils import getlogger, cached_property
 
 logger = getlogger(__name__)
 logger.setLevel(10)

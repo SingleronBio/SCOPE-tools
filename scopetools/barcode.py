@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
+import gzip
+import json
 import re
+import sys
 from collections import defaultdict
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import List, Dict, Tuple
+
 import numpy as np
 import pandas as pd
 import pysam
-import sys
-from pathlib import Path
-import gzip
-from scopetools.utils import getlogger, CommandWrapper
-from dataclasses import dataclass, field
-from typing import List, Dict, Tuple
-import json
+
 from scopetools.report import Reporter
+from scopetools.utils import getlogger, CommandWrapper, cached_property
 
 logger = getlogger(__name__)
 logger.setLevel(10)

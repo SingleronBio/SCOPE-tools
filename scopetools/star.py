@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
+import json
 import re
 import sys
 from pathlib import Path
-from scopetools.utils import getlogger, CommandWrapper
-import json
+
 from scopetools.report import Reporter
+from scopetools.utils import getlogger, CommandWrapper
 
 logger = getlogger(__name__)
 logger.setLevel(10)
@@ -26,7 +27,6 @@ class STARLogger(object):
     def parse_star(self):
         with open(self.star_log, mode='r', encoding='utf-8') as f:
             lines = f.read()
-            attrs = ['Uniquely_mapped', 'Multiple_mapped']
             uniquely_pattern = re.compile(r'Uniquely mapped reads\D*(\d*\.?\d*%?)', flags=re.S)
             multiple_pattern = re.compile(r'of reads mapped to too many loci\D*(\d*\.?\d*%?)', flags=re.S)
             i, j = uniquely_pattern.findall(lines)

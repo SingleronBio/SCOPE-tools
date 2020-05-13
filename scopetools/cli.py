@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
-import click
-from scopetools.utils import BarcodeType, AdapterType, MultipleOption
 from pathlib import Path
+
+import click
+
+from scopetools.utils import BarcodeType, AdapterType, MultipleOption, MutuallyExclusiveOption
 
 __version__ = '0.1.0'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 @click.group(chain=True, context_settings=CONTEXT_SETTINGS)
-@click.version_option(version=__version__, prog_name='scopetools')
+@click.version_option(version=__version__, prog_name='scope-tools')
 def cli():
     """
     Single Cell Omics Preparation Entity Tools

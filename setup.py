@@ -23,7 +23,7 @@ setup(
     license="Apache",
     author="Singleron Biotechnologies",
     author_email='luyang@singleronbio.com',
-    url='https://github.com/luyang93/SCOPE-tools',
+    url='https://github.com/SingleronBio/SCOPE-tools',
     packages=['scopetools'],
     entry_points={
         'console_scripts': [

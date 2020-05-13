@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import click
-import re
 import logging
-import sys
+import re
 import subprocess
-import time
+import sys
 from concurrent.futures import ThreadPoolExecutor
+
+import click
 
 
 class BarcodeType(click.ParamType):
@@ -107,7 +107,7 @@ class MutuallyExclusiveOption(click.Option):
     def handle_parse_result(self, ctx, opts, args):
         if self.mutually_exclusive.intersection(opts) and self.name in opts:
             raise click.UsageError(
-                "Illegal usage: `{}` is mutually exclusive with arguments `{}`.".format(self.name, ', '.join(self.mutually_exclusive))
+                "Illegal usage: {} is mutually exclusive with arguments `{}`.".format(self.name, ', '.join(self.mutually_exclusive))
             )
 
         return super(MutuallyExclusiveOption, self).handle_parse_result(ctx, opts, args)

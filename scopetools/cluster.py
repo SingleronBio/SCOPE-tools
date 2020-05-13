@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-from scopetools.utils import getlogger, CommandWrapper
-from pathlib import Path
-import scanpy as sc
-import pandas as pd
 import numpy as np
-
+import pandas as pd
+import scanpy as sc
 
 sc.settings.set_figure_params(dpi=120)
 

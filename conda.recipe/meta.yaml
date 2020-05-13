@@ -53,7 +53,7 @@ test:
     - pytest tests
 
 about:
-  home: https://github.com/luyang93/SCOPE-tools
+  home: https://github.com/SingleronBio/SCOPE-tools
   summary: Single Cell Omics Preparation Entity tools
   license: {{ data['license'] }}
   license_file: LICENSE

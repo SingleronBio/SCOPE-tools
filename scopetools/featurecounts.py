@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
-from pathlib import Path
-from scopetools.utils import getlogger, CommandWrapper
-import sys
-import re
 import json
+import re
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+import pysam
+
 from scopetools.report import Reporter
+from scopetools.utils import getlogger, CommandWrapper
 
 logger = getlogger(__name__)
 logger.setLevel(10)
