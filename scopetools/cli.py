@@ -55,7 +55,6 @@ def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, link
     else:
         raise click.BadParameter("Error: Illegal usage: [bctype] or [pattern whitelist linkers] must have one")
     from scopetools.barcode import barcode
-    click.echo('barcode pipeline')
     barcode(ctx=ctx, fq1=fq1, fq2=fq2, sample=sample, outdir=outdir, pattern=pattern, whitelist=whitelist, linkers=linkers, lowqual=lowqual, lownum=lownum)
 
 
@@ -63,18 +62,18 @@ def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, link
 @click.option('--fq', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="fq help")
 @click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), required=True, help="outdir help")
-@click.option('--adapter', cls=MultipleOption, type=AdapterType(), nargs=-1, default=['polyT=A{20}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'], help="adapter help")
+@click.option('--adapter', cls=MultipleOption, type=AdapterType(), nargs=-1, default=['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'], help="adapter help")
 @click.option('--minimum-length', type=click.INT, default=20, show_default=True, help="minimum length help")
 @click.option('--nextseq-trim', type=click.INT, default=20, show_default=True, help="nextseq trim help")
 @click.option('--overlap', type=click.INT, default=5, show_default=True, help="overlap help")
+@click.option('--thread', type=click.INT, default=2, show_default=True, help="thread help")
 @click.pass_context
-def cutadapt_pipe(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap):
+def cutadapt_pipe(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread):
     """
     cutadapt description
     """
     from scopetools.cutadapt import cutadapt
-    click.echo('cutadapt pipeline')
-    cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap)
+    cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread)
 
 
 @cli.command(name="STAR", short_help="STAR short help")
@@ -90,7 +89,6 @@ def star_pipe(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, run
     """
     STAR description
     """
-    click.echo('STAR pipeline')
     from scopetools.star import star
     star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn)
 
@@ -107,7 +105,6 @@ def featurecounts_pipe(ctx, input, annot, sample, outdir, format, nthreads):
     """
     featureCounts description
     """
-    click.echo('featureCounts pipeline')
     from scopetools.featurecounts import featurecounts
     featurecounts(ctx, input, annot, sample, outdir, format, nthreads)
 
@@ -122,7 +119,6 @@ def count_pipe(ctx, bam, sample, outdir, cells):
     """
     count description
     """
-    click.echo('count pipeline')
     from scopetools.count import count
     count(ctx, bam, sample, outdir, cells)
 
@@ -130,6 +126,7 @@ def count_pipe(ctx, bam, sample, outdir, cells):
 @cli.command(name='cluster', short_help="cluster short help")
 @click.option('--input', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="scRNA-seq file or path")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), required=True, help="outdir help")
+@click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.option('--filter-genome', type=click.STRING, default='None', show_default=True, help="filter_genome not analysis")
 @click.option('--max-genes', type=click.INT, default=2500, show_default=True, help="the max genes in each cell")
 @click.option('--max-permito', type=click.FLOAT, default=0.05, show_default=True, help="the max percent_mito in each cell")
@@ -138,13 +135,13 @@ def count_pipe(ctx, bam, sample, outdir, cells):
 @click.option('--rgenes-method', type=click.Choice(['wilcoxon', 't-test', 'logreg']), default='wilcoxon', show_default=True, help="rank genes method,t-test,wilcoxon,logreg")
 @click.option('--cluster-algo', type=click.Choice(['leiden', 'louvain']), default='leiden', help="cluster algorithm,leiden or louvain")
 @click.option('--plot-method', type=click.Choice(['umap', 'tsne']), default='umap', show_default=True, help="cluster in umap or tsne")
-def cluster_pipe(ctx, input, outdir, filter_genome, max_genes, max_permito, neighbors, pc, rgenes_method, cluster_algo, plot_method):
+def cluster_pipe(ctx, input, outdir, sample, filter_genome, max_genes, max_permito, neighbors, pc, rgenes_method, cluster_algo, plot_method):
     """
     cluster description
     """
     click.echo('cluster pipeline')
     from scopetools.cluster import cluster
-    cluster(ctx, input, outdir, filter_genome, max_genes, max_permito, neighbors, pc, rgenes_method, cluster_algo, plot_method)
+    cluster(ctx, input, outdir, sample, filter_genome, max_genes, max_permito, neighbors, pc, rgenes_method, cluster_algo, plot_method)
 
 
 @cli.command(name='run', help="run short help")

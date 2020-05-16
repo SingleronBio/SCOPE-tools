@@ -44,7 +44,7 @@ class CutadaptLogger(object):
             logger.warning(f'can not match cutadapt log')
 
 
-def cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap):
+def cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread):
     adapter_para = ''
     for i, j in zip(['-a'] * len(adapter), adapter):
         adapter_para += f'{i} {j} '
@@ -53,7 +53,7 @@ def cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, ove
 
     # cutadapt
     clean_fastq = sample_outdir / f'{sample}_clean_2.fq.gz'
-    cutadapt_cmd = f'cutadapt {adapter_para}-m {minimum_length} --nextseq-trim={nextseq_trim} --overlap {overlap} -o {clean_fastq} {fq}'
+    cutadapt_cmd = f'cutadapt {adapter_para}-n {len(adapter)} -j {thread} -m {minimum_length} --nextseq-trim={nextseq_trim} --overlap {overlap} -o {clean_fastq} {fq}'
     logger.info('cutadapt start!')
     logger.info(cutadapt_cmd)
     cutadapt_process = CommandWrapper(command=cutadapt_cmd, logger=logger)
