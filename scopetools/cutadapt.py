@@ -20,7 +20,7 @@ class CutadaptLogger(object):
 
     def parse(self):
         pattern = re.compile(r'(Total reads processed:.*?Total written.*?)\n', flags=re.S)
-        pattern_space = re.compile(r'\s{2,}')
+        pattern_space = re.compile(r':\s*')
         match = pattern.search(self.stdout)
         if match:
             self.stat_info.append(
@@ -29,11 +29,11 @@ class CutadaptLogger(object):
                     'val': self.sample
                 }
             )
-            for line in match.group().split('\n'):
+            for line in match.group().splitlines():
                 if line:
-                    line = re.sub(pattern_space, '  ', line)
+                    line = re.sub(pattern_space, ':', line)
                     line = line.replace(',', '')
-                    attr, val = line.split('  ')
+                    attr, val = line.split(':')
                     self.stat_info.append(
                         {
                             'attr': attr,
