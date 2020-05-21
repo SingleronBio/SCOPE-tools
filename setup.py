@@ -6,13 +6,15 @@ requirements = [
     # package requirements go here
     'cutadapt',
     'pysam',
-    'scipy',
+    'scipy>=1.3',
     'numpy',
     'pandas',
     'jinja2',
     'matplotlib',
-    'click',
-    'scanpy',
+    'click==7.1.2',
+    'scanpy==1.5.0',
+    'leidenalg',
+    'louvain'
 ]
 
 setup(

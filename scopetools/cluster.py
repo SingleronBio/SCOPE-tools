@@ -1,89 +1,88 @@
 # -*- coding: utf-8 -*-
-import numpy as np
+import os
+from pathlib import Path
+
 import pandas as pd
 import scanpy as sc
+import json
+from scopetools.report import Reporter
+from scopetools.utils import getlogger
 
+FILETYPE = ['png', 'pdf']
+CLUSTER_ALGORITHM = ['leiden', 'louvain']
 sc.settings.set_figure_params(dpi=120)
+sc.settings.verbosity = 0
 
-if not os.path.exists(args['outdir']):
-    os.mkdir(args['outdir'])
-rg_method = args['rgenes_method']
-hfile_name = '_' + args['input'].split("/")[-1]
-
-# adata = sc.read(args['input'])
-adata = sc.read_mtx(args['input'])
-adata.var_names_make_unique()
-os.chdir(args['outdir'])
-sc.pl.highest_expr_genes(adata, n_top=20, save=hfile_name + ".pdf")
-sc.pl.highest_expr_genes(adata, n_top=20, save=hfile_name + ".png")
-
-sc.pp.filter_cells(adata, min_genes=200)
-sc.pp.filter_genes(adata, min_cells=3)
-
-mito_genes = adata.var_names.str.startswith("mt-")
-if not mito_genes.all():
-    mito_genes = adata.var_names.str.startswith("MT-")
-adata.obs['percent_mito'] = np.sum(adata[:, mito_genes].X, axis=1).A1 / np.sum(adata.X, axis=1).A1
-adata.obs['n_counts'] = adata.X.sum(axis=1).A1
-sc.pl.violin(adata, ['n_genes', 'n_counts', 'percent_mito'], jitter=0.4, multi_panel=True, save=hfile_name + ".pdf")
-sc.pl.violin(adata, ['n_genes', 'n_counts', 'percent_mito'], jitter=0.4, multi_panel=True, save=hfile_name + ".png")
-
-# filter data
-adata = adata[adata.obs.n_genes < args["max_genes"], :]
-adata = adata[adata.obs.percent_mito < args["max_permito"], :]
-
-sc.pp.normalize_total(adata, target_sum=1e4)
-sc.pp.log1p(adata)
-adata.raw = adata
-sc.pp.highly_variable_genes(adata, min_mean=0.0125, max_mean=3, min_disp=0.5)
-sc.pl.highly_variable_genes(adata, save=hfile_name + ".pdf")
-sc.pl.highly_variable_genes(adata, save=hfile_name + ".png")
-
-# Actually do the filtering
-adata = adata[:, adata.var.highly_variable]
-# 回归每个细胞总计数和线粒体基因表达百分比的影响。将数据放缩到方差为1。
-sc.pp.regress_out(adata, ['n_counts', 'percent_mito'])
-sc.pp.scale(adata, max_value=10)
-
-# Principal component analysis
-sc.tl.pca(adata, svd_solver='arpack')
-sc.pl.pca_variance_ratio(adata, log=True, save=hfile_name + ".pdf")
-sc.pl.pca_variance_ratio(adata, log=True, save=hfile_name + ".png")
-sc.pp.neighbors(adata, n_neighbors=int(args['neighbors']), n_pcs=int(args['pc']))
-# sc.tl.umap(adata)
-# ngenes=len(adata.var)
-if args['cluster_algo'] == "leiden":
-    # sc.settings.verbosity=2
-    sc.tl.leiden(adata)
-    sc.tl.rank_genes_groups(adata, 'leiden', method=rg_method, n_genes=100000)
-# sc.pl.rank_genes_groups(adata,n_genes=25,sharey=False,save=hfile_name+".png")
-elif args['cluster_algo'] == "louvain":
-    sc.tl.louvain(adata)
-    sc.tl.rank_genes_groups(adata, 'louvain', method=rg_method, n_genes=100000)
-
-if args['plot_method'] == "tsne":
-    sc.tl.tsne(adata)
-    sc.pl.tsne(adata, color=[args['cluster_algo']], save=hfile_name + ".pdf")
-    sc.pl.tsne(adata, color=[args['cluster_algo']], save=hfile_name + ".png")
-elif args['plot_method'] == "umap":
-    sc.tl.umap(adata)
-    sc.pl.umap(adata, color=[args['cluster_algo']], save=hfile_name + ".pdf")
-    sc.pl.umap(adata, color=[args['cluster_algo']], save=hfile_name + ".png")
-
-result = adata.uns["rank_genes_groups"]
-groups = result["names"].dtype.names
-s = pd.DataFrame(
-    {str(group) + '_' + key: result[key][group]
-     for group in groups for key in ['names', 'logfoldchanges', 'pvals', 'pvals_adj']})
-for i in groups:
-    file = "cluster" + i + "_diffgenes.csv"
-    s.iloc[:, int(i) * 4:(int(i) + 1) * 4].to_csv(file, index=None, header=['names', 'logFC', 'pvals', 'pvals_adj'])
-
-adata.obs.to_csv("./obs.csv", index=None, header=True)
-adata.var.to_csv("./var.csv", index=None, header=True)
-adata.write("./results.h5ad")
+logger = getlogger(__name__)
+logger.setLevel(10)
 
 
-def cluster(ctx, input, outdir, filter_genome, max_genes, max_permito, neighbors, pc, rgenes_method, cluster_algo, plot_method):
-    sc.settings.set_figure_params(dpi=120)
-    pass
+def cluster(ctx, matrix, outdir, sample, barcodes, genes):
+    sample_outdir = Path(outdir, sample, '06.cluster')
+    sample_outdir.mkdir(parents=True, exist_ok=True)
+    os.chdir(sample_outdir)
+
+    adata_mtx = sc.read_mtx(matrix).T
+    obs = pd.read_csv(barcodes, index_col=0, header=None)
+    var = pd.read_csv(genes, index_col=0, header=None)
+    obs.index.set_names(None, inplace=True)
+    var.index.set_names(None, inplace=True)
+    adata_mtx.obs = obs
+    adata_mtx.var = var
+
+    result_file = sample_outdir / f'{sample}.h5ad'
+
+    adata_mtx.var_names_make_unique()
+    [sc.pl.highest_expr_genes(adata_mtx, n_top=30, save=f'_{sample}.{filetype}') for filetype in FILETYPE]
+
+    sc.pp.filter_cells(adata_mtx, min_genes=200)
+    sc.pp.filter_genes(adata_mtx, min_cells=3)
+
+    adata_mtx.var['mt'] = adata_mtx.var_names.str.upper().str.startswith('MT-')
+    sc.pp.calculate_qc_metrics(adata_mtx, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+
+    [sc.pl.violin(adata_mtx, ['n_genes_by_counts', 'total_counts', 'pct_counts_mt'], jitter=0.4, multi_panel=True, save=f'_{sample}.{filetype}') for filetype in FILETYPE]
+    [sc.pl.scatter(adata_mtx, x='total_counts', y='pct_counts_mt', save=f'_pct_mt_{sample}.{filetype}') for filetype in FILETYPE]
+    [sc.pl.scatter(adata_mtx, x='total_counts', y='n_genes_by_counts', save=f'_n_genes_{sample}.{filetype}') for filetype in FILETYPE]
+
+    adata_mtx = adata_mtx[adata_mtx.obs.n_genes_by_counts < 2500, :]
+    adata_mtx = adata_mtx[adata_mtx.obs.pct_counts_mt < 5, :]
+    sc.pp.normalize_total(adata_mtx, target_sum=1e4)
+    sc.pp.log1p(adata_mtx)
+    sc.pp.highly_variable_genes(adata_mtx, min_mean=0.0125, max_mean=3, min_disp=0.5)
+
+    [sc.pl.highly_variable_genes(adata_mtx, save=f'_{sample}.{filetype}') for filetype in FILETYPE]
+
+    adata_mtx.raw = adata_mtx
+    adata_mtx = adata_mtx[:, adata_mtx.var.highly_variable]
+
+    sc.pp.regress_out(adata_mtx, ['total_counts', 'pct_counts_mt'])
+    sc.pp.scale(adata_mtx, max_value=10)
+    sc.tl.pca(adata_mtx, svd_solver='arpack')
+
+    sc.pp.neighbors(adata_mtx, n_neighbors=20, n_pcs=40)
+    sc.tl.umap(adata_mtx)
+    sc.tl.leiden(adata_mtx)
+    sc.tl.louvain(adata_mtx)
+    [sc.pl.umap(adata_mtx, color=algo, save=f'_{algo}_{sample}.{filetype}') for filetype in FILETYPE for algo in CLUSTER_ALGORITHM]
+
+    adata_mtx.write(result_file, compression='gzip')
+
+    stat_info = []
+    img = []
+    with open(sample_outdir / 'stat.json', mode='w', encoding='utf-8') as f:
+        pngs = Path(sample_outdir / 'figures').rglob('*.png')
+        for png in pngs:
+            img.append(
+                {
+                    'path': str(png.resolve()),
+                    'name': png.name
+                }
+            )
+        json.dump(stat_info, f)
+
+    # report
+    logger.info('generate report start!')
+    Reporter(name='cluster', stat_file=sample_outdir / 'stat.json', outdir=sample_outdir.parent, img=img)
+
+    logger.info('generate report done!')

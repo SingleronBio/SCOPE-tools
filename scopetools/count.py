@@ -37,8 +37,8 @@ class CellGeneUmiSummary(object):
 
         self.pdf = outdir / 'barcode_filter_magnitude.pdf'
         self.marked_counts_file = outdir / f'{self.sample}_counts.csv'
-        self.matrix_file = outdir / f'{self.sample}_matrix.xls'
-        self.matrix_cellbarcode_file = outdir / f'{self.sample}_cellbarcode.tsv'
+        self.matrix_file = outdir / f'{self.sample}_matrix.mtx'
+        self.matrix_cellbarcode_file = outdir / f'{self.sample}_barcodes.tsv'
         self.matrix_gene_file = outdir / f'{self.sample}_genes.tsv'
 
         self.call_cells()
@@ -104,7 +104,8 @@ class CellGeneUmiSummary(object):
         plt.savefig(self.pdf)
 
     def generate_matrix(self):
-        self.gene_cell_matrix.to_csv(self.matrix_file)
+        self.gene_cell_matrix.columns.to_series().to_csv(self.matrix_cellbarcode_file, index=False, header=False)
+        self.gene_cell_matrix.index.to_series().to_csv(self.matrix_gene_file, index=False, header=False)
         mmwrite(str(self.matrix_file), coo_matrix(self.gene_cell_matrix))
 
     def downsample(self):
@@ -124,7 +125,7 @@ class CellGeneUmiSummary(object):
             'Cells_number',
             'Saturation',
             'Mean_Reads',
-            'Median_UMIs'
+            'Median_UMIs',
             'Total_Genes',
             'Median_Genes',
             'fraction_reads_in_cells',
