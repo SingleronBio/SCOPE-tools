@@ -31,6 +31,8 @@ class SeqInfo(object):
     cell_dict = defaultdict(int)
 
 
+SEQ_INFO = SeqInfo()
+
 @dataclass()
 class BarcodeDict(dict):
     start: List[int] = field(default_factory=list)

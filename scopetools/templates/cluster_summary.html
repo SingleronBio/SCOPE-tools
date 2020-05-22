@@ -1,0 +1,24 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%">
+    <h2>cell qc summary</h2>
+    <div class="has_desc"></div>
+    <div class="box">
+        <table style="float: left; margin-left: 0; margin-right:3%; width: 47%">
+            {% for img in cluster_img %}
+                <p>{{ img.name }}</p>
+                <img src="data:image/png;base64, {{ img.base64 }}" alt="{{ img.name }}" width=40%/>
+                <br>
+            {% endfor %}
+        </table>
+
+        <div class="clear"></div>
+        <div class="description" style="display: none;">
+            <p>highest_expr_genes：所有细胞中表达量最高的一些基因在每个细胞中表达比例</p>
+            <p>violin：the number of genes expressed in the count matrix, the total counts per cell, the percentage of counts in mitochondrial genes</p>
+            <p>scatter_pct_mt：pct_counts_mt</p>
+            <p>scatter_n_genes：n_genes_by_counts</p>
+            <p>filter_genes_dispersion：filter_genes_dispersion</p>
+            <p>umap_leiden：umap_leiden</p>
+            <p>umap_louvain：umap_louvain</p>
+        </div>
+    </div>
+</div>

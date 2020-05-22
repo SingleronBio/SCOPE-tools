@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 from pathlib import Path
-
+import base64
 import pandas as pd
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 
@@ -12,11 +12,12 @@ env = Environment(
 
 
 class Reporter(object):
-    def __init__(self, name, stat_file, outdir: Path, plot=None):
+    def __init__(self, name, stat_file, outdir: Path, plot=None, img=None):
         self.name = name
         self.stat_file = stat_file
         self.outdir = outdir
         self.plot = plot
+        self.img = img
         self.get_report()
 
     def get_report(self):
@@ -33,6 +34,17 @@ class Reporter(object):
 
         if self.plot:
             data[self.name + '_plot'] = self.plot
+
+        if self.img:
+            data[self.name + '_img'] = []
+            for i in self.img:
+                with open(i['path'], 'rb') as f:
+                    data[self.name + '_img'].append(
+                        {
+                            'base64': base64.b64encode(f.read()).decode(),
+                            'name': i['name']
+                        }
+                    )
 
         with open(self.outdir / 'report.html', encoding='utf-8', mode='w') as f:
             html = template.render(data)

@@ -21,6 +21,7 @@ class STARLogger(object):
                 'val': f'{sample}'
             }
         ]
+        self.plot = {}
         self.parse_star()
         self.parse_picard()
 
@@ -55,22 +56,26 @@ class STARLogger(object):
                 picard_dict = dict(zip(attrs, vals))
                 self.stat_info.append(
                     {
-                        'attr': 'exon',
+                        'attr': 'Exonic_Regions',
                         'val': f'{int(picard_dict["CODING_BASES"]) + int(picard_dict["UTR_BASES"]):d} ({float(picard_dict["PCT_CODING_BASES"]) + float(picard_dict["PCT_UTR_BASES"]):.2%})'
                     }
                 )
                 self.stat_info.append(
                     {
-                        'attr': 'intron',
+                        'attr': 'Intronic_Regions',
                         'val': f'{int(picard_dict["INTRONIC_BASES"]):d} ({float(picard_dict["PCT_INTRONIC_BASES"]):.2%})'
                     }
                 )
                 self.stat_info.append(
                     {
-                        'attr': 'intergenic',
+                        'attr': 'Intergenic_Regions',
                         'val': f'{int(picard_dict["INTERGENIC_BASES"]):d} ({float(picard_dict["PCT_INTRONIC_BASES"]):.2%})'
                     }
                 )
+                self.plot = {
+                    'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
+                    'region_values': [int(picard_dict["CODING_BASES"]), int(picard_dict["INTRONIC_BASES"]), int(picard_dict["INTERGENIC_BASES"])]
+                }
 
 
 def star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn):
@@ -107,5 +112,6 @@ def star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthrea
 
     # report
     logger.info('generate report start!')
-    Reporter(name='STAR', stat_file=sample_outdir / 'stat.json', outdir=sample_outdir.parent)
+    Reporter(name='STAR', stat_file=sample_outdir / 'stat.json', outdir=sample_outdir.parent, plot=star_log.plot)
+
     logger.info('generate report done!')

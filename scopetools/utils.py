@@ -143,7 +143,7 @@ class CommandWrapper(object):
     def stdout_pipe(self, pipe_name='stdout'):
         while self.p.poll() is None:
             line = getattr(self.p, pipe_name).readline()
-            stdout = line.strip()
+            stdout = line.strip('\n')
             if stdout:
                 self.logger.info(stdout)
                 self.stdout += line
@@ -151,7 +151,7 @@ class CommandWrapper(object):
     def stderr_pipe(self, pipe_name='stderr'):
         while self.p.poll() is None:
             line = getattr(self.p, pipe_name).readline()
-            stderr = line.strip()
+            stderr = line.strip('\n')
             if stderr:
                 self.logger.warning(stderr)
 
