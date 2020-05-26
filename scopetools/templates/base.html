@@ -122,7 +122,11 @@
             {% include "featureCounts_summary.html" %}
         {% endif %}
 
-        {% if umi_summary is defined %}
+        {% if count_summary is defined %}
+            {% include "count_summary.html" %}
+        {% endif %}
+
+        {% if UMI_summary is defined %}
             {% include "umi_summary.html" %}
         {% endif %}
 

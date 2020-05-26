@@ -2,30 +2,20 @@
     <h2>UMI summary</h2>
     <div class="has_desc"></div>
     <div class="box">
-        <table style="float: left; margin-left: 0%; margin-top: 3%; margin-right:3%; width: 47%">
-            {% for item in count_summary %}
-                <tr>
-                    {% for i in item %}
-                        <td>{{ i|e }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </table>
-
-        <table style="float: left; margin-left: 0; margin-top: 3%; margin-right:3%; width: 47%">
-            <div id="myDivUMI" style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+        <table style="float: left; margin-left: 0; margin-top: 0; margin-right:0; width: 100%">
+            <div id="myDivUMI" style="float: left; margin-left: 0; margin-right:0; width: 100%">
                 <script>
                     var index1 = [];
-                    for (var i = 0; i < {{ CB_num }}; i++) {
+                    for (var i = 0; i < {{ UMI_summary['CB_num'] }}; i++) {
                         index1.push(i + 1)
                     }
                     var index2 = [];
-                    for (var i = 0; i < {{ UB_num }}; i++) {
-                        index2.push(i + 1 + {{ CB_num }})
+                    for (var i = 0; i < {{ UMI_summary['UB_num'] }}; i++) {
+                        index2.push(i + 1 + {{ UMI_summary['CB_num'] }})
                     }
                     var trace0 = {
                         x: index1,
-                        y: {{ Cells }},
+                        y: {{ UMI_summary['Cells'] }},
                         mode: 'lines',
                         name: 'Cells',
                         line: {
@@ -35,7 +25,7 @@
                     };
                     var trace1 = {
                         x: index2,
-                        y: {{ Background }},
+                        y: {{ UMI_summary['Background'] }},
                         mode: 'lines',
                         name: 'Background',
                         line: {
@@ -75,12 +65,12 @@
             </div>
         </table>
 
-        <table style="float: left; margin-left: 0; margin-top: 3%; margin-right:3%; width: 47%">
-            <div id="myDivSaturation" style="float: left; margin-left: 0%; margin-top: 5%; margin-right:3%; width: 47%">
+        <table style="float: left; margin-left: 0; margin-top: 0; margin-right:0; width: 100%">
+            <div id="myDivSaturation" style="float: left;margin-left: 0; margin-top: 0; margin-right:0; width: 100%">
                 <script>
                     var data = [{
-                        x: {{ percentile|safe }},
-                        y: {{ Saturation|safe }},
+                        x: {{ UMI_summary['percentile']|safe }},
+                        y: {{ UMI_summary['Saturation']|safe }},
                         mode: 'lines'
                     }];
                     var layout = {
@@ -116,12 +106,12 @@
             </div>
         </table>
 
-        <table style="float: left; margin-left: 0; margin-top: 3%; margin-right:3%; width: 47%">
-            <div id="myDivMedianGeneNum" style="float: left; margin-left: 3%; margin-top: 5%; margin-right:0%; width: 47%">
+        <table style="float: left; margin-left: 0; margin-top: 0; margin-right:0; width: 100%">
+            <div id="myDivMedianGeneNum" style="float: left; margin-left: 0; margin-top: 0; margin-right:0; width: 100%">
                 <script>
                     var data = [{
-                        x: {{ percentile|safe }},
-                        y: {{ MedianGeneNum|safe }},
+                        x: {{ UMI_summary['percentile']|safe }},
+                        y: {{ UMI_summary['MedianGeneNum']|safe }},
                         mode: 'lines'
                     }];
                     var layout = {
@@ -160,13 +150,9 @@
 
         <div class="clear"></div>
         <div class="description" style="display: none;">
-            <p>SampleName：样品名</p>
-            <p>Cells_number：细胞数目</p>
-            <p>Saturation：所有细胞中，有多于2条Reads支持的UMI的数目占UMI总数目的比例</p>
-            <p>Mean_Reads：每个细胞测到的平均Reads数目</p>
-            <p>Median_UMIs：每个细胞的UMI数目的中位数</p>
-            <p>Total_Genes：所有细胞检测到的基因数目 (去重复)</p>
-            <p>Median_Genes：每个细胞检测基因数目的中位数</p>
+            <p>图1</p>
+            <p>图2</p>
+            <p>图3</p>
         </div>
     </div>
 </div>

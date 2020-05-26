@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 import scanpy as sc
-import json
+
 from scopetools.report import Reporter
 from scopetools.utils import getlogger
 
@@ -21,6 +21,8 @@ def cluster(ctx, matrix, outdir, sample, barcodes, genes):
     sample_outdir = Path(outdir, sample, '06.cluster')
     sample_outdir.mkdir(parents=True, exist_ok=True)
     os.chdir(sample_outdir)
+
+    logger.info('cluster start!')
 
     adata_mtx = sc.read_mtx(matrix).T
     obs = pd.read_csv(barcodes, index_col=0, header=None)
@@ -68,21 +70,15 @@ def cluster(ctx, matrix, outdir, sample, barcodes, genes):
 
     adata_mtx.write(result_file, compression='gzip')
 
-    stat_info = []
-    img = []
-    with open(sample_outdir / 'stat.json', mode='w', encoding='utf-8') as f:
-        pngs = Path(sample_outdir / 'figures').rglob('*.png')
-        for png in pngs:
-            img.append(
-                {
-                    'path': str(png.resolve()),
-                    'name': png.name
-                }
-            )
-        json.dump(stat_info, f)
+    logger.info('cluster done!')
+
+    stat_info = {}
+    img = {}
+    pngs = Path(sample_outdir / 'figures').rglob('*.png')
+    for png in pngs:
+        img[png.name] = png.resolve()
 
     # report
     logger.info('generate report start!')
-    Reporter(name='cluster', stat_file=sample_outdir / 'stat.json', outdir=sample_outdir.parent, img=img)
-
+    Reporter(name='cluster', stat_json=stat_info, outdir=sample_outdir.parent, img=img)
     logger.info('generate report done!')

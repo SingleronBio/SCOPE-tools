@@ -3,13 +3,12 @@
     <div class="has_desc"></div>
     <div class="box">
         <table style="float: left; margin-left: 0; margin-right:3%; width: 47%">
-            {% for img in cluster_img %}
-                <p>{{ img.name }}</p>
-                <img src="data:image/png;base64, {{ img.base64 }}" alt="{{ img.name }}" width=40%/>
-                <br>
+            {% for key, value in cluster_img.items() %}
+                <p>{{ key }}</p>
+                <img src="data:image/png;base64, {{ value }}" alt="{{ key }}" width=40%>
             {% endfor %}
+            <br>
         </table>
-
         <div class="clear"></div>
         <div class="description" style="display: none;">
             <p>highest_expr_genes：所有细胞中表达量最高的一些基因在每个细胞中表达比例</p>

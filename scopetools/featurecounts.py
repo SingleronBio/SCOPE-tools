@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
 import re
 import sys
 from collections import defaultdict
@@ -48,12 +47,9 @@ class GeneName(object):
 class FeatureCountsLogger(object):
     def __init__(self, log, sample):
         self.log = log
-        self.stat_info = [
-            {
-                'attr': 'SampleName',
-                'val': f'{sample}'
-            }
-        ]
+        self.stat_info = {
+            'SampleName': f'{sample}'
+        }
         self.parse_log()
 
     def parse_log(self):
@@ -66,12 +62,7 @@ class FeatureCountsLogger(object):
                 pattern = re.compile(f'(?<={p})\D*(\d*)')
                 vals.append(int(pattern.findall(lines)[0]))
             for attr, val in zip(attrs, vals):
-                self.stat_info.append(
-                    {
-                        'attr': attr,
-                        'val': f'{val} ({val / sum(vals):.2%})'
-                    }
-                )
+                self.stat_info[attr] = f'{val} ({val / sum(vals):.2%})'
 
 
 class Alignment(object):
@@ -133,10 +124,8 @@ def featurecounts(ctx, input, annot, sample, outdir, format, nthreads):
 
     # parse log
     featurecounts_log = FeatureCountsLogger(log=f'{sample_outdir}/{sample}.summary', sample=sample)
-    with open(sample_outdir / 'stat.json', mode='w', encoding='utf-8') as f:
-        json.dump(featurecounts_log.stat_info, f)
 
     # report
     logger.info('generate report start!')
-    Reporter(name='featureCounts', stat_file=sample_outdir / 'stat.json', outdir=sample_outdir.parent)
+    Reporter(name='featureCounts', stat_json=featurecounts_log.stat_info, outdir=sample_outdir.parent)
     logger.info('generate report done!')

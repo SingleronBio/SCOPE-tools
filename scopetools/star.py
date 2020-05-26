@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
 import re
 import sys
 from pathlib import Path
@@ -15,12 +14,9 @@ class STARLogger(object):
     def __init__(self, star_log, picard_log, sample):
         self.star_log = star_log
         self.picard_log = picard_log
-        self.stat_info = [
-            {
-                'attr': 'SampleName',
-                'val': f'{sample}'
-            }
-        ]
+        self.stat_info = {
+            'SampleName': f'{sample}'
+        }
         self.plot = {}
         self.parse_star()
         self.parse_picard()
@@ -31,19 +27,9 @@ class STARLogger(object):
             uniquely_pattern = re.compile(r'Uniquely mapped reads\D*(\d*\.?\d*%?)', flags=re.S)
             multiple_pattern = re.compile(r'of reads mapped to too many loci\D*(\d*\.?\d*%?)', flags=re.S)
             i, j = uniquely_pattern.findall(lines)
-            self.stat_info.append(
-                {
-                    'attr': 'Uniquely_mapped',
-                    'val': f'{i} ({j})'
-                }
-            )
+            self.stat_info['Uniquely_mapped'] = f'{i} ({j})'
             i, j = multiple_pattern.findall(lines)
-            self.stat_info.append(
-                {
-                    'attr': 'Multiple_mapped',
-                    'val': f'{i} ({j})'
-                }
-            )
+            self.stat_info['Multiple_mapped'] = f'{i} ({j})'
 
     def parse_picard(self):
         with open(self.picard_log, mode='r', encoding='utf-8') as f:
@@ -54,24 +40,9 @@ class STARLogger(object):
                 attrs = match.groups()[0].split('\t')
                 vals = match.groups()[1].split('\t')
                 picard_dict = dict(zip(attrs, vals))
-                self.stat_info.append(
-                    {
-                        'attr': 'Exonic_Regions',
-                        'val': f'{int(picard_dict["CODING_BASES"]) + int(picard_dict["UTR_BASES"]):d} ({float(picard_dict["PCT_CODING_BASES"]) + float(picard_dict["PCT_UTR_BASES"]):.2%})'
-                    }
-                )
-                self.stat_info.append(
-                    {
-                        'attr': 'Intronic_Regions',
-                        'val': f'{int(picard_dict["INTRONIC_BASES"]):d} ({float(picard_dict["PCT_INTRONIC_BASES"]):.2%})'
-                    }
-                )
-                self.stat_info.append(
-                    {
-                        'attr': 'Intergenic_Regions',
-                        'val': f'{int(picard_dict["INTERGENIC_BASES"]):d} ({float(picard_dict["PCT_INTRONIC_BASES"]):.2%})'
-                    }
-                )
+                self.stat_info['Exonic_Regions'] = f'{int(picard_dict["CODING_BASES"]) + int(picard_dict["UTR_BASES"]):d} ({float(picard_dict["PCT_CODING_BASES"]) + float(picard_dict["PCT_UTR_BASES"]):.2%})'
+                self.stat_info['Intronic_Regions'] = f'{int(picard_dict["INTRONIC_BASES"]):d} ({float(picard_dict["PCT_INTRONIC_BASES"]):.2%})'
+                self.stat_info['Intergenic_Regions'] = f'{int(picard_dict["INTERGENIC_BASES"]):d} ({float(picard_dict["PCT_INTRONIC_BASES"]):.2%})'
                 self.plot = {
                     'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
                     'region_values': [int(picard_dict["CODING_BASES"]), int(picard_dict["INTRONIC_BASES"]), int(picard_dict["INTERGENIC_BASES"])]
@@ -107,11 +78,9 @@ def star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthrea
 
     # parse_log
     star_log = STARLogger(star_log=f'{out_prefix}Log.final.out', picard_log=region_txt, sample=sample)
-    with open(sample_outdir / 'stat.json', mode='w', encoding='utf-8') as f:
-        json.dump(star_log.stat_info, f)
 
     # report
     logger.info('generate report start!')
-    Reporter(name='STAR', stat_file=sample_outdir / 'stat.json', outdir=sample_outdir.parent, plot=star_log.plot)
+    Reporter(name='STAR', stat_json=star_log.stat_info, outdir=sample_outdir.parent, plot=star_log.plot)
 
     logger.info('generate report done!')

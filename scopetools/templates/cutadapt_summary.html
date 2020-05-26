@@ -2,26 +2,12 @@
     <h2>Trimming summary</h2>
     <div class="has_desc"></div>
     <div class="box">
-        <table style="float: left; margin-left: 0; margin-right:3%; width: 47%">
-            {% for item in cutadapt_summary %}
-                {% if loop.index <= (loop.length+1)/2 %}
-                    <tr>
-                        {% for i in item %}
-                            <td>{{ i|e }}</td>
-                        {% endfor %}
-                    </tr>
-                {% endif %}
-            {% endfor %}
-        </table>
-        <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
-            {% for item in cutadapt_summary %}
-                {% if loop.index > (loop.length+1)/2 %}
-                    <tr>
-                        {% for i in item %}
-                            <td>{{ i|e }}</td>
-                        {% endfor %}
-                    </tr>
-                {% endif %}
+        <table style="float: left; margin-left: 0; margin-right:0; width: 100%">
+            {% for key, value in cutadapt_summary.items() %}
+                <tr>
+                    <td>{{ key|e }}</td>
+                    <td>{{ value|e }}</td>
+                </tr>
             {% endfor %}
         </table>
         <div class="clear"></div>

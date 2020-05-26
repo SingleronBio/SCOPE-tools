@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import gzip
-import json
 import re
 import sys
 from collections import defaultdict
@@ -32,6 +31,7 @@ class SeqInfo(object):
 
 
 SEQ_INFO = SeqInfo()
+
 
 @dataclass()
 class BarcodeDict(dict):
@@ -393,54 +393,19 @@ def barcode(
     cell_q30 = cell_umi_quality_array[:cell_len, 30:].sum() / cell_umi_quality_array[:cell_len].sum()
     umi_q30 = cell_umi_quality_array[cell_len:, 30:].sum() / cell_umi_quality_array[cell_len:].sum()
 
-    with open(sample_outdir / 'stat.json', mode='w', encoding='utf-8') as f:
-        stat_info = [
-            {
-                'attr': 'SampleName',
-                'val': sample
-            },
-            {
-                'attr': 'Number of Reads',
-                'val': SEQ_INFO.total_num,
-            },
-            {
-                'attr': 'Valid Reads',
-                'val': f'{SEQ_INFO.clean_num} ({SEQ_INFO.clean_num / SEQ_INFO.total_num:.2%})',
-            },
-            {
-                'attr': 'Valid Barcodes',
-                'val': len(SEQ_INFO.cell_dict),
-            },
-            {
-                'attr': 'Q30 of Barcodes',
-                'val': f'{cell_q30:.2%}',
-            },
-            {
-                'attr': 'Q30 of UMIs',
-                'val': f'{umi_q30:.2%}',
-            },
-            {
-                'attr': 'Reads without polyT',
-                'val': f'{SEQ_INFO.no_polyt_num} ({SEQ_INFO.no_polyt_num / SEQ_INFO.total_num:.2%})',
-            },
-            {
-                'attr': 'Reads with lowQual',
-                'val': f'{SEQ_INFO.lowqual_num} ({SEQ_INFO.lowqual_num / SEQ_INFO.total_num:.2%})',
-            },
-            {
-                'attr': 'Reads without linker',
-                'val': f'{SEQ_INFO.no_linker_num} ({SEQ_INFO.no_linker_num / SEQ_INFO.total_num:.2%})',
-            },
-            {
-                'attr': 'Reads without Barcode',
-                'val': f'{SEQ_INFO.no_cell_num} ({SEQ_INFO.no_cell_num / SEQ_INFO.total_num:.2%})',
-            },
-            {
-                'attr': 'Reads with corrected Barcode',
-                'val': f'{SEQ_INFO.cell_corrected_num} ({SEQ_INFO.cell_corrected_num / SEQ_INFO.total_num:.2%})'
-            }
-        ]
-        json.dump(stat_info, f)
+    stat_info = {
+        'SampleName': sample,
+        'Number of Reads': SEQ_INFO.total_num,
+        'Valid Reads': f'{SEQ_INFO.clean_num} ({SEQ_INFO.clean_num / SEQ_INFO.total_num:.2%})',
+        'Valid Barcodes': len(SEQ_INFO.cell_dict),
+        'Q30 of Barcodes': f'{cell_q30:.2%}',
+        'Q30 of UMIs': f'{umi_q30:.2%}',
+        'Reads without polyT': f'{SEQ_INFO.no_polyt_num} ({SEQ_INFO.no_polyt_num / SEQ_INFO.total_num:.2%})',
+        'Reads with lowQual': f'{SEQ_INFO.lowqual_num} ({SEQ_INFO.lowqual_num / SEQ_INFO.total_num:.2%})',
+        'Reads without linker': f'{SEQ_INFO.no_linker_num} ({SEQ_INFO.no_linker_num / SEQ_INFO.total_num:.2%})',
+        'Reads without Barcode': f'{SEQ_INFO.no_cell_num} ({SEQ_INFO.no_cell_num / SEQ_INFO.total_num:.2%})',
+        'Reads with corrected Barcode': f'{SEQ_INFO.cell_corrected_num} ({SEQ_INFO.cell_corrected_num / SEQ_INFO.total_num:.2%})',
+    }
 
     # indice
     df = pd.DataFrame(cell_umi_base_array)
@@ -475,5 +440,5 @@ def barcode(
 
     # report
     logger.info('generate report start!')
-    Reporter(name='barcode', stat_file=sample_outdir / 'stat.json', outdir=sample_outdir.parent)
+    Reporter(name='barcode', stat_json=stat_info, outdir=sample_outdir.parent)
     logger.info('generate report done!')

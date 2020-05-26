@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import csv
-import json
 from collections import defaultdict
 from itertools import groupby
 from pathlib import Path
@@ -33,7 +32,8 @@ class CellGeneUmiSummary(object):
         self.threshold = None
         self.valid_cell = None
         self.saturations = pd.DataFrame(columns=['percent', 'median_gene_num', 'saturation']).set_index('percent')
-        self.stat_info = []
+        self.count_info = {}
+        self.umi_info = {}
 
         self.pdf = outdir / 'barcode_filter_magnitude.pdf'
         self.marked_counts_file = outdir / f'{self.sample}_counts.csv'
@@ -45,7 +45,8 @@ class CellGeneUmiSummary(object):
         self.plot_umi_cell()
         self.generate_matrix()
         self.downsample()
-        self.generate_summary()
+        self.generate_count_summary()
+        self.generate_umi_summary()
 
     @cached_property
     def gene_cell_matrix(self):
@@ -119,7 +120,7 @@ class CellGeneUmiSummary(object):
             saturation = 1 - sample_df.loc[sample_df['UMI'] < 2, :].shape[0] / total
             self.saturations.loc[i / 10, :] = [gene_num_median, saturation]
 
-    def generate_summary(self):
+    def generate_count_summary(self):
         attrs = [
             'SampleName',
             'Cells_number',
@@ -130,7 +131,6 @@ class CellGeneUmiSummary(object):
             'Median_Genes',
             'fraction_reads_in_cells',
             'mean_reads_per_cell',
-            'downsample'
         ]
         vals = [
             f"{self.sample}",
@@ -141,16 +141,33 @@ class CellGeneUmiSummary(object):
             f"{int(self.cell_total_genes):d}",
             f"{int(self.cell_describe.loc['50%', 'geneID'])}",
             f"{self.cell_reads_count / self.reads_mapped_to_transcriptome:.2f}",
-            f"{int(self.reads_mapped_to_transcriptome / self.cell_describe.loc['count', 'read_count']):d}",
-            self.saturations.to_dict()
+            f"{int(self.reads_mapped_to_transcriptome / self.cell_describe.loc['count', 'read_count']):d}"
         ]
         for attr, val in zip(attrs, vals):
-            self.stat_info.append(
-                {
-                    'attr': attr,
-                    'val': val
-                }
-            )
+            self.count_info[attr] = val
+
+    def generate_umi_summary(self):
+        attrs = [
+            'percentile',
+            'MedianGeneNum',
+            'Saturation',
+            'CB_num',
+            'Cells',
+            'UB_num',
+            'Background'
+        ]
+        vals = [
+            self.saturations.index.astype(float).to_list(),
+            list(map(int, self.saturations.iloc[:, 0].astype(float).to_list())),
+            (100 * self.saturations.iloc[:, 1].astype(float)).to_list(),
+            self.cell_df[self.cell_df['mark'] > 0].shape[0],
+            self.cell_df[self.cell_df['mark'] > 0]['UMI'].sort_values(ascending=False).to_list(),
+            self.cell_df[self.cell_df['mark'] < 1].shape[0],
+            self.cell_df[self.cell_df['mark'] < 1]['UMI'].sort_values(ascending=False).to_list(),
+        ]
+
+        for attr, val in zip(attrs, vals):
+            self.umi_info[attr] = val
 
 
 class Cell(object):
@@ -221,16 +238,12 @@ def count(ctx, bam, sample, outdir, cells):
     logger.info('UMI count done!')
 
     # call cells
-    pdf = sample_outdir / 'barcode_filter_magnitude.pdf'
-    marked_counts_file = sample_outdir / f'{sample}_counts.txt'
     logger.info('cell count start!')
     cell_gene = CellGeneUmiSummary(file=count_detail_file, outdir=sample_outdir, sample=sample, cell_num=cells)
     logger.info('cell count done!')
 
-    with open(sample_outdir / 'stat.json', mode='w', encoding='utf-8') as f:
-        json.dump(cell_gene.stat_info, f)
-
     # report
     logger.info('generate report start!')
-    Reporter(name='count', stat_file=sample_outdir / 'stat.json', outdir=sample_outdir.parent)
+    Reporter(name='count', stat_json=cell_gene.count_info, outdir=sample_outdir.parent)
+    Reporter(name='UMI', stat_json=cell_gene.umi_info, outdir=sample_outdir.parent)
     logger.info('generate report done!')
