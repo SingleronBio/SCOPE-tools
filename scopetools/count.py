@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
-from scopetools.utils import getlogger
+import csv
 from collections import defaultdict
-import pandas as pd
+from itertools import groupby
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import pandas as pd
+import pysam
 from scipy.io import mmwrite
-from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix
+
+from scopetools.report import Reporter
+from scopetools.utils import getlogger, cached_property
 
 logger = getlogger(__name__)
 logger.setLevel(10)
@@ -15,67 +21,153 @@ logger.setLevel(10)
 class CellGeneUmiSummary(object):
 
     def __init__(self, file: Path, outdir: Path, sample: str, cell_num: int = 3000):
-        self.seq_df = pd.read_csv(file)
-        self.cell_num = cell_num
+        self.file = file
         self.sample = sample
+        self.cell_num = cell_num
+
+        self.seq_df = pd.read_csv(self.file, index_col=[0])
+        self.cell_df = None
+        self.all_seq_df = None
+        self.nth = None
+        self.threshold = None
+        self.valid_cell = None
+        self.saturations = pd.DataFrame(columns=['percent', 'median_gene_num', 'saturation']).set_index('percent')
+        self.count_info = {}
+        self.umi_info = {}
 
         self.pdf = outdir / 'barcode_filter_magnitude.pdf'
         self.marked_counts_file = outdir / f'{self.sample}_counts.csv'
-        self.matrix_file = outdir / f'{self.sample}_matrix.xls'
-        self.matrix_cellbarcode_file = outdir / f'{self.sample}_cellbarcode.tsv'
+        self.matrix_file = outdir / f'{self.sample}_matrix.mtx'
+        self.matrix_cellbarcode_file = outdir / f'{self.sample}_barcodes.tsv'
         self.matrix_gene_file = outdir / f'{self.sample}_genes.tsv'
 
-        self.threshold, self.valid_cell, self.cell_df = self.call_cells()
+        self.call_cells()
         self.plot_umi_cell()
-        self.cellbarcode_describe, self.cellbarcode_total_genes, self.cellbarcode_reads_count, self.reads_mapped_to_transcriptome = self.gen_matrix()
-        self.save()
+        self.generate_matrix()
+        self.downsample()
+        self.generate_count_summary()
+        self.generate_umi_summary()
 
-    def call_cells(self, col='UMI'):
-        cell_df = self.seq_df.groupby('Barcode').agg(
-            {
-                'count': ['sum', lambda x: sum(x[x > 1])],
+    @cached_property
+    def gene_cell_matrix(self):
+        matrix = self.seq_df.loc[self.seq_df['mark'] > 0, :].pivot_table(index='geneID', columns='Barcode', aggfunc={'UMI': 'count'}).fillna(0).astype(int)
+        matrix.columns = matrix.columns.droplevel(level=0)
+        return matrix
+
+    @cached_property
+    def cell_describe(self):
+        return self.cell_df.loc[self.cell_df['mark'] > 0, :].describe()
+
+    @cached_property
+    def cell_total_genes(self):
+        return self.seq_df.loc[self.seq_df['mark'] > 0, 'geneID'].nunique()
+
+    @cached_property
+    def cell_reads_count(self):
+        return self.seq_df.loc[self.seq_df['mark'] > 0, 'count'].sum()
+
+    @cached_property
+    def reads_mapped_to_transcriptome(self):
+        return self.seq_df['count'].sum()
+
+    def call_cells(self):
+        self.cell_df = self.seq_df.pivot_table(
+            index=['Barcode'],
+            aggfunc={
+                'geneID': 'nunique',
                 'UMI': 'count',
-                'geneID': 'nunique'
+                'count': ['sum', lambda x: sum(x[x > 1])]
             }
         )
-        cell_df.columns = ['read_count', 'UMI2', 'UMI', 'geneID']
-        cell_df.sort_values(by=col, ascending=False, inplace=True)
-        nth = max(0, int(self.cell_num * 0.01) - 1)
-        threshold = max(1, int(cell_df.iloc[nth][col] * 0.1))
-        valid_cell = cell_df[cell_df[col] > threshold].index
-        cell_df.loc[:, 'mark'] = 'UB'
-        cell_df.loc[cell_df.index.isin(valid_cell), 'mark'] = 'CB'
-        cell_df.to_csv(self.marked_counts_file)
-        return threshold, valid_cell, cell_df
+        self.cell_df.columns = ['UMI', 'UMI2', 'read_count', 'geneID']
 
-    def plot_umi_cell(self, col='UMI'):
-        plt.plot(self.cell_df[col])
+        self.nth = max(0, int(self.cell_num * 0.01) - 1)
+        self.threshold = max(1, int(self.cell_df['UMI'].nlargest(self.nth)[-1] * 0.1))
+        self.valid_cell = self.cell_df[self.cell_df['UMI'] > self.threshold].index
+
+        self.seq_df.loc[:, 'mark'] = 0
+        self.seq_df.loc[self.seq_df.index.isin(self.valid_cell), 'mark'] = 1
+
+        self.cell_df.loc[:, 'mark'] = 0
+        self.cell_df.loc[self.cell_df.index.isin(self.valid_cell), 'mark'] = 1
+
+        self.cell_df.to_csv(self.marked_counts_file)
+
+    def plot_umi_cell(self):
+        plt.plot(self.cell_df['UMI'].sort_values(ascending=False))
         plt.hlines(self.threshold, 0, self.valid_cell.shape[0], linestyle='dashed')
         plt.vlines(self.valid_cell.shape[0], 0, self.threshold, linestyle='dashed')
         plt.xlabel('cell count')
         plt.ylabel('UMI num')
-        plt.title(f'expected cell num:{self.cell_num}\nUMI threshold:{self.threshold}\ncell num:{self.valid_cell.shape[0]}')
+        plt.title(
+            f'expected cell num:{self.cell_num}\nUMI threshold:{self.threshold}\ncell num:{self.valid_cell.shape[0]}')
         plt.loglog()
         plt.savefig(self.pdf)
 
-    def gen_matrix(self):
-        self.seq_df.loc[:, 'mark'] = 'UB'
-        self.seq_df.loc[self.seq_df['Barcode'].isin(self.valid_cell), 'mark'] = 'CB'
+    def generate_matrix(self):
+        self.gene_cell_matrix.columns.to_series().to_csv(self.matrix_cellbarcode_file, index=False, header=False)
+        self.gene_cell_matrix.index.to_series().to_csv(self.matrix_gene_file, index=False, header=False)
+        mmwrite(str(self.matrix_file), coo_matrix(self.gene_cell_matrix))
 
-        cellbarcode_describe = self.cell_df.loc[self.cell_df['mark'] == 'CB', :].describe()
-        cellbarcode_total_genes = self.seq_df.loc[self.seq_df['mark'] == 'CB', 'geneID'].nunique()
-        cellbarcode_reads_count = self.seq_df.loc[self.seq_df['mark'] == 'CB', 'count'].sum()
-        reads_mapped_to_transcriptome = self.seq_df['count'].sum()
+    def downsample(self):
+        self.all_seq_df = self.seq_df.reset_index().set_index(['Barcode', 'geneID', 'UMI']).index.repeat(self.seq_df['count']).to_frame().set_index(['Barcode'])
+        for i in range(1, 11):
+            sample_df = self.all_seq_df.sample(frac=i / 10)
+            sample_df = sample_df.loc[sample_df.index.isin(self.valid_cell), :]
+            total = sample_df['UMI'].count()
+            gene_num_median = sample_df.pivot_table(index='Barcode', aggfunc={'geneID': 'nunique'})['geneID'].median()
+            sample_df = sample_df.pivot_table(index=['Barcode', 'geneID', 'UMI'], aggfunc={'UMI': 'count'})
+            saturation = 1 - sample_df.loc[sample_df['UMI'] < 2, :].shape[0] / total
+            self.saturations.loc[i / 10, :] = [gene_num_median, saturation]
 
-        table = self.cell_df.loc[self.cell_df['mark'] == 'CB', :].pivot_table(index='geneID', columns='Barcode', values='UMI', aggfunc=len).fillna(0).astype(int)
-        table.fillna(0).to_csv(self.matrix_file, sep='\t')
-        table.columns.to_series().to_csv(self.matrix_cellbarcode_file, index=False, sep='\t')
-        table.index.to_series().to_csv(self.matrix_gene_file, index=False, sep='\t')
-        mmwrite(str(self.matrix_file), csr_matrix(table.fillna(0)))
-        return cellbarcode_describe, cellbarcode_total_genes, cellbarcode_reads_count, reads_mapped_to_transcriptome
+    def generate_count_summary(self):
+        attrs = [
+            'SampleName',
+            'Cells_number',
+            'Saturation',
+            'Mean_Reads',
+            'Median_UMIs',
+            'Total_Genes',
+            'Median_Genes',
+            'fraction_reads_in_cells',
+            'mean_reads_per_cell',
+        ]
+        vals = [
+            f"{self.sample}",
+            f"{int(self.cell_describe.loc['count', 'read_count']):d}",
+            f"{self.saturations.loc[1, 'saturation']:.2%}",
+            f"{int(self.cell_describe.loc['mean', 'read_count']):d}",
+            f"{int(self.cell_describe.loc['50%', 'UMI']):d}",
+            f"{int(self.cell_total_genes):d}",
+            f"{int(self.cell_describe.loc['50%', 'geneID'])}",
+            f"{self.cell_reads_count / self.reads_mapped_to_transcriptome:.2f}",
+            f"{int(self.reads_mapped_to_transcriptome / self.cell_describe.loc['count', 'read_count']):d}"
+        ]
+        for attr, val in zip(attrs, vals):
+            self.count_info[attr] = val
 
-    def save(self):
-        self.seq_df.to_csv(self.marked_counts_file)
+    def generate_umi_summary(self):
+        attrs = [
+            'percentile',
+            'MedianGeneNum',
+            'Saturation',
+            'CB_num',
+            'Cells',
+            'UB_num',
+            'Background'
+        ]
+        vals = [
+            self.saturations.index.astype(float).to_list(),
+            list(map(int, self.saturations.iloc[:, 0].astype(float).to_list())),
+            (100 * self.saturations.iloc[:, 1].astype(float)).to_list(),
+            self.cell_df[self.cell_df['mark'] > 0].shape[0],
+            self.cell_df[self.cell_df['mark'] > 0]['UMI'].sort_values(ascending=False).to_list(),
+            self.cell_df[self.cell_df['mark'] < 1].shape[0],
+            self.cell_df[self.cell_df['mark'] < 1]['UMI'].sort_values(ascending=False).to_list(),
+        ]
+
+        for attr, val in zip(attrs, vals):
+            self.umi_info[attr] = val
 
 
 class Cell(object):
@@ -131,21 +223,27 @@ def count(ctx, bam, sample, outdir, cells):
     # umi correction
     logger.info('UMI count start!')
     count_detail_file = sample_outdir / f'{sample}_count_detail.csv'
-    # with pysam.AlignmentFile(bam, mode='r') as p, open(count_detail_file, mode='w') as f:
-    #     headers = ['Barcode', 'geneID', 'UMI', 'count']
-    #
-    #     f_csv = csv.writer(f)
-    #     f_csv.writerow(headers)
-    #
-    #     for cell, seqs in groupby(p, lambda seq: seq.qname.split('_', 1)[0]):
-    #         c = Cell(cell, seqs)
-    #         if c.gene_umi:
-    #             for gene in c.gene_umi:
-    #                 for umi in c.gene_umi[gene]:
-    #                     f_csv.writerow((c.cell, gene, umi, c.gene_umi[gene][umi]))
-    # logger.info('UMI count done!')
+    with pysam.AlignmentFile(bam, mode='r') as p, open(count_detail_file, mode='w') as f:
+        headers = ['Barcode', 'geneID', 'UMI', 'count']
+
+        f_csv = csv.writer(f)
+        f_csv.writerow(headers)
+
+        for cell, seqs in groupby(p, lambda seq: seq.qname.split('_', 1)[0]):
+            c = Cell(cell, seqs)
+            if c.gene_umi:
+                for gene in c.gene_umi:
+                    for umi in c.gene_umi[gene]:
+                        f_csv.writerow((c.cell, gene, umi, c.gene_umi[gene][umi]))
+    logger.info('UMI count done!')
 
     # call cells
-    pdf = sample_outdir / 'barcode_filter_magnitude.pdf'
-    marked_counts_file = sample_outdir / f'{sample}_counts.txt'
-    umi_plot = CellGeneUmiSummary(file=count_detail_file, outdir=sample_outdir, sample=sample, cell_num=cells)
+    logger.info('cell count start!')
+    cell_gene = CellGeneUmiSummary(file=count_detail_file, outdir=sample_outdir, sample=sample, cell_num=cells)
+    logger.info('cell count done!')
+
+    # report
+    logger.info('generate report start!')
+    Reporter(name='count', stat_json=cell_gene.count_info, outdir=sample_outdir.parent)
+    Reporter(name='UMI', stat_json=cell_gene.umi_info, outdir=sample_outdir.parent)
+    logger.info('generate report done!')

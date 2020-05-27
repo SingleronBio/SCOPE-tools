@@ -1,2 +1,4 @@
 include versioneer.py
 include scopetools/_version.py
+graft scopetools/templates
+graft scopetools/extra

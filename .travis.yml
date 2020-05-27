@@ -19,10 +19,10 @@ install:
   - conda install conda-build anaconda-client pytest pytest-cov
   - conda config --set auto_update_conda no
   - conda build conda.recipe --no-test
-  - conda install --use-local scopetools
+  - conda install --use-local scope-tools
   - conda info -a
 script:
-  - pytest -v --color=yes --cov=scopetools tests
+  - pytest -v --color=yes --cov=scope-tools tests
 after_success:
   - conda install -c conda-forge codecov
   - codecov

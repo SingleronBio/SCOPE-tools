@@ -1,0 +1,26 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%">
+    <h2>count summary</h2>
+    <div class="has_desc"></div>
+    <div class="box">
+        <table style="float: left; margin-left: 0; margin-right:0; width: 100%">
+            {% for key, value in count_summary.items() %}
+                <tr>
+                    <td>{{ key|e }}</td>
+                    <td>{{ value|e }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <div class="clear"></div>
+        <div class="description" style="display: none;">
+            <p>SampleName：样品名</p>
+            <p>Cells_number：细胞数目</p>
+            <p>Saturation：所有细胞中，有多于2条Reads支持的UMI的数目占UMI总数目的比例</p>
+            <p>Mean_Reads：每个细胞测到的平均Reads数目</p>
+            <p>Median_UMIs：每个细胞的UMI数目的中位数</p>
+            <p>Total_Genes：所有细胞检测到的基因数目 (去重复)</p>
+            <p>Median_Genes：每个细胞检测基因数目的中位数</p>
+            <p>fraction_reads_in_cells：</p>
+            <p>mean_reads_per_cell：</p>
+        </div>
+    </div>
+</div>

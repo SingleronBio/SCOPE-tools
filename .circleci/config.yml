@@ -25,7 +25,7 @@ jobs:
             conda config --set auto_update_conda no
             conda info -a
             conda build conda.recipe --no-test
-            conda install --use-local scopetools
+            conda install --use-local scope-tools
 
       
       # - save_cache:
@@ -38,7 +38,7 @@ jobs:
           name: run tests
           command: |
             # source activate adj
-            pytest --color=yes -v --cov=scopetools tests
+            pytest --color=yes -v --cov=scope-tools tests
             conda install -c conda-forge codecov
             codecov
 
