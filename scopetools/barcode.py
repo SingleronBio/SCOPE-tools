@@ -67,8 +67,8 @@ class BarcodePattern(object):
 
 class MisSeq(object):
 
-    def __init__(self, file):
-        self.file = file
+    def __init__(self, seqs):
+        self.seqs: list = seqs
         self.raw_seq: Dict[str, Tuple[str, int, str, str]] = {}
         self.all_seq: Dict[str, Tuple[str, int, str, str]] = {}
         self.read_seq()
@@ -84,11 +84,8 @@ class MisSeq(object):
         return seq in self.all_seq
 
     def read_seq(self):
-        with open(self.file, mode='r', encoding='utf-8') as f:
-            for line in f.readlines():
-                seq = line.strip()
-                if seq:
-                    self.raw_seq[seq] = (seq, -1, '', '')
+        for seq in self.seqs:
+            self.raw_seq[seq] = (seq, -1, '', '')
 
     def gen_seq(self):
         for seq in self.raw_seq:
@@ -328,7 +325,7 @@ def barcode(
         lowqual=None,
         lownum=None,
         whitelist=None,
-        linkers=None
+        linker=None
 ):
     """
 
@@ -339,7 +336,7 @@ def barcode(
     :param outdir:
     :param pattern:
     :param whitelist:
-    :param linkers:
+    :param linker:
     :param lowqual:
     :param lownum:
     :return:
@@ -356,8 +353,22 @@ def barcode(
     cell_umi_base_array = np.zeros((cell_len + umi_len, 5), dtype=np.uint64)
     base_dict = dict(zip(['A', 'T', 'C', 'G', 'N'], range(0, 5)))
 
-    linkers_dict = [MisSeq(linker) for linker in linkers]
-    cell_dict = MisSeq(whitelist)
+    whitelist_list = []
+    with open(whitelist, encoding='utf-8', mode='r')as f:
+        for line in f.readlines():
+            whitelist_list.append(line.strip())
+    cell_dict = MisSeq(whitelist_list)
+
+    linker_list = []
+    with open(linker, encoding='utf-8', mode='r')as f:
+        length = [end - start for start, end in zip(barcode_pattern['L'].start, barcode_pattern['L'].end)]
+        linker_list = [[] for i in range(len(length))]
+        for line in f.readlines():
+            linkers = line.strip()
+            for nth, val in enumerate(length):
+                linker_list[nth].append(linkers[:val])
+                linkers = linkers[val:]
+    linkers_dict = [MisSeq(linker) for linker in linker_list]
 
     sample_outdir = Path(outdir, sample, '01.barcode')
     sample_outdir.mkdir(parents=True, exist_ok=True)
