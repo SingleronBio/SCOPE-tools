@@ -1,13 +1,15 @@
-|Stars| |condaDownloads| |Docs| |Status| |Install|
+|Stars| |condaDownloads| |Version| |Docs| |Status| |Install|
 
 .. |Stars| image:: https://img.shields.io/github/stars/SingleronBio/SCOPE-tools?logo=GitHub&color=yellow
    :target: https://github.com/SingleronBio/SCOPE-tools/stargazers
 .. |condaDownloads| image:: https://anaconda.org/singleronbio/scope-tools/badges/downloads.svg
    :target: https://anaconda.org/singleronbio/scope-tools
+.. |Version| image:: https://anaconda.org/singleronbio/scope-tools/badges/version.svg
+    :target: https://anaconda.org/singleronbio/scope-tools
 .. |Docs| image:: https://readthedocs.org/projects/scope-tools/badge/?version=latest
    :target: https://scope-tools.readthedocs.io/?badge=latest
 .. |Status| image:: https://anaconda.org/bioconda/scanpy-scripts/badges/latest_release_date.svg
-   :target: https://github.com/SingleronBio/SCOPE-tools/stargazers
+   :target: https://anaconda.org/singleronbio/scope-tools
 .. |Install| image:: https://anaconda.org/singleronbio/scope-tools/badges/installer/conda.svg
    :target: https://anaconda.org/singleronbio/scope-tools
 
