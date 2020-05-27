@@ -12,16 +12,17 @@
         </table>
         <div class="clear"></div>
         <div class="description" style="display: none;">
-            <p>SampleName：样品名</p>
-            <p>Number of Reads：数据中的总Reads数</p>
-            <p>Valid Reads：通过过滤的Reads数据</p>
-            <p>Valid Barcodes：通过过滤的Reads中的Barcode数目</p>
-            <p>Q30 of Barocdes：Barocdes序列的Q30</p>
-            <p>Q30 of UMIs：UMIs序列的Q30</p>
-            <p>Reads without polyT：Read1序列中不包含polyT的Reads数目</p>
-            <p>Reads with lowQual：Barocde和UMI序列中包含2个及以上碱基质量值低于14的Reads数目</p>
-            <p>Reads without linker：Read1序列中不包含Barcode的Reads数目</p>
-            <p>Reads without Barcode：Read1序列中不包含Barcode的Reads数目</p>
+            <p>SampleName：样本名称</p>
+            <p>Number of Reads：原始数据中的总Reads数</p>
+            <p>Valid Reads：过滤后的Reads数目及比例</p>
+            <p>Valid Barcodes：Barcode序列校正后和whitelist一致的read数目</p>
+            <p>Q30 of Barocdes：基于Barcode的分数，大于30的比率</p>
+            <p>Q30 of UMIs：基于UMI的分数，大于30的比率</p>
+            <p>Reads without polyT：Read1序列中不包含polyT的Reads数目及比例</p>
+            <p>Reads with lowQual：Barocde和UMI序列中包含大于1个碱基质量值低于14的Reads数目及比例</p>
+            <p>Reads without linker：Read1序列中不包含linker的Reads数目及比例</p>
+            <p>Reads without Barcode：Read1序列中不包含Barcode的Reads数目及比例</p>
+            <p>Reads with corrected Barcode: 校正Barcode的Reads数目</p>p>
         </div>
     </div>
 </div>

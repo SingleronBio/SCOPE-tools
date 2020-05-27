@@ -11,13 +11,13 @@
         </table>
         <div class="clear"></div>
         <div class="description" style="display: none;">
-            <p>highest_expr_genes：所有细胞中表达量最高的一些基因在每个细胞中表达比例</p>
-            <p>violin：the number of genes expressed in the count matrix, the total counts per cell, the percentage of counts in mitochondrial genes</p>
-            <p>scatter_pct_mt：pct_counts_mt</p>
-            <p>scatter_n_genes：n_genes_by_counts</p>
-            <p>filter_genes_dispersion：filter_genes_dispersion</p>
-            <p>umap_leiden：umap_leiden</p>
-            <p>umap_louvain：umap_louvain</p>
+            <p>highest_expr_genes：细胞中表达最高的基因在每个细胞中表达比例的分布</p>
+            <p>violin：横轴为样本名称，纵轴为数目（比例），内部Violin图表示该数目下的密度分布。图1：细胞中基因数分布；图2: 细胞中UMI数分布；图3：线粒体基因含量分布</p>
+            <p>scatter_pct_mt：横轴为细胞总UMI数，纵轴为该细胞线粒体基因含量</p>
+            <p>scatter_n_genes：横轴为细胞总UMI数，纵轴为该细胞基因数</p>
+            <p>filter_genes_dispersion：横轴为细胞基因平均表达，纵轴为该细胞基因表达分散度</p>
+            <p>umap_leiden：使用leiden聚类算法的umap降维图</p>
+            <p>umap_louvain：使用louvain聚类算法的umap降维图</p>
         </div>
     </div>
 </div>
