@@ -90,7 +90,7 @@ class MisSeq(object):
     def gen_seq(self):
         for seq in self.raw_seq:
             self.all_seq[seq] = self.raw_seq[seq]
-            for mis in ('A', 'T', 'C', 'G'):
+            for mis in ('A', 'T', 'C', 'G', 'N'):
                 for pos, base in enumerate(seq):
                     if mis != base:
                         mis_seq = seq[:pos] + mis + seq[pos + 1:]
@@ -302,7 +302,6 @@ class SCOPEv2(Sequence):
 
         if self.corrected_num > 0:
             SEQ_INFO.cell_corrected_num += 1
-            return None
 
         SEQ_INFO.cell_dict[self.corrected_cell] += 1
 
