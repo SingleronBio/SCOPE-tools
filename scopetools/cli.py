@@ -129,43 +129,25 @@ def count_pipe(ctx, bam, sample, outdir, cells):
 @click.option('--matrix', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="matrix help")
 @click.option('--barcodes', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="barcodes help")
 @click.option('--genes', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="genes help")
-# @click.option('--n_top',  type=click.INT, default=30, show_default=True, help="n_top help")
-# @click.option('--min_genes',  type=click.INT, default=30, show_default=True, help="min_genes help")
-# @click.option('--min_cells',  type=click.INT, default=30, show_default=True, help="min_cells help")
-# @click.option('--n_genes_by_counts',  type=click.INT, default=30, show_default=True, help="n_genes_by_counts help")
-# @click.option('--pct_counts_mt',  type=click.INT, default=5, show_default=True, help="pct_counts_mt help")
-# @click.option('--pct_counts_mt',  type=click.INT, default=30, show_default=True, help="min_cells help")
-# @click.option('--pct_counts_mt',  type=click.INT, default=30, show_default=True, help="min_cells help")
-# @click.option('--pct_counts_mt',  type=click.INT, default=30, show_default=True, help="min_cells help")
-# @click.option('--pct_counts_mt',  type=click.INT, default=30, show_default=True, help="min_cells help")
-
-# @click.option('--n_top',  type=click.INT, default=30, show_default=True, help="n_top help")
-
+@click.option('--n_top', type=click.INT, default=30, show_default=True, help="Number of top")
+@click.option('--min_genes', type=click.INT, default=200, show_default=True, help="Minimum number of genes expressed required for a cell to pass filtering")
+@click.option('--min_cells', type=click.INT, default=3, show_default=True, help="Minimum number of cells expressed required for a gene to pass filtering")
+@click.option('--n_genes_by_counts', type=click.INT, default=2500, show_default=True, help="Minimum number of expressed genes required for a cell to pass filtering")
+@click.option('--pct_counts_mt', type=click.INT, default=5, show_default=True, help="Maximum pct_counts_mt required for a cell to pass filtering")
+@click.option('--exclude_highly_expressed', type=click.BOOL, default=False, show_default=True, help="Exclude (very) highly expressed genes for the computation of the normalization factor (size factor) for each cell")
+@click.option('--max_fraction', type=click.FLOAT, default=0.05, show_default=True, help="Consider cells as highly expressed that have more counts than max_fraction of the original total counts in at least one cell")
+@click.option('--n_top_genes', type=click.INT, default=None, show_default=True, help="Number of highly-variable genes to keep.")
+@click.option('--max_value', type=click.FLOAT, default=None, show_default=True, help="Clip (truncate) to this value after scaling")
+@click.option('--n_neighbors', type=click.IntRange(2, 100), default=15, show_default=True, help="The size of local neighborhood (in terms of number of neighboring data points) used for manifold approximation")
+@click.option('--n_pcs', type=click.INT, default=None, show_default=True, help="Use this many PCs")
 @click.pass_context
-# @click.option('--filter-genome', type=click.STRING, default='None', show_default=True, help="filter_genome not analysis")
-# @click.option('--max-genes', type=click.INT, default=2500, show_default=True, help="the max genes in each cell")
-# @click.option('--max-permito', type=click.FLOAT, default=0.05, show_default=True, help="the max percent_mito in each cell")
-# @click.option('--neighbors', type=click.INT, default=15, show_default=True, help="the neighbors")
-# @click.option('--pc', type=click.INT, default=40, show_default=True, help="Use this many PCs")
-# @click.option('--rgenes-method', type=click.Choice(['wilcoxon', 't-test', 'logreg']), default='wilcoxon', show_default=True, help="rank genes method,t-test,wilcoxon,logreg")
-# @click.option('--cluster-algo', type=click.Choice(['leiden', 'louvain']), default='leiden', help="cluster algorithm,leiden or louvain")
-# @click.option('--plot-method', type=click.Choice(['umap', 'tsne']), default='umap', show_default=True, help="cluster in umap or tsne")
-def cluster_pipe(ctx, matrix, outdir, sample, barcodes, genes):
+def cluster_pipe(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs):
     """
     cluster description
     """
     click.echo('cluster pipeline')
     from scopetools.cluster import cluster
-    cluster(ctx, matrix, outdir, sample, barcodes, genes)
-
-
-# def cluster_pipe(ctx, matrix, outdir, sample, filter_genome, max_genes, max_permito, neighbors, pc, rgenes_method, cluster_algo, plot_method):
-#     """
-#     cluster description
-#     """
-#     click.echo('cluster pipeline')
-#     from scopetools.cluster import cluster
-#     cluster(ctx, input, outdir, sample, filter_genome, max_genes, max_permito, neighbors, pc, rgenes_method, cluster_algo, plot_method)
+    cluster(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs)
 
 
 @cli.command(name='run', help="run short help")
