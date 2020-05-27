@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-
 # Version: 0.18
 
 """The Versioneer - like a rocketeer, but for versions.
@@ -342,9 +340,9 @@ def get_config_from_root(root):
     # configparser.NoOptionError (if it lacks "VCS="). See the docstring at
     # the top of versioneer.py for instructions on writing your setup.cfg .
     setup_cfg = os.path.join(root, "setup.cfg")
-    parser = configparser.ConfigParser()
+    parser = configparser.SafeConfigParser()
     with open(setup_cfg, "r") as f:
-        parser.read_file(f)
+        parser.readfp(f)
     VCS = parser.get("versioneer", "VCS")  # mandatory
 
     def get(parser, name):

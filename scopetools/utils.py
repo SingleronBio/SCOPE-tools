@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import click
-import re
 import logging
-import sys
+import re
 import subprocess
-import time
+import sys
 from concurrent.futures import ThreadPoolExecutor
+
+import click
 
 
 class BarcodeType(click.ParamType):
@@ -107,7 +107,7 @@ class MutuallyExclusiveOption(click.Option):
     def handle_parse_result(self, ctx, opts, args):
         if self.mutually_exclusive.intersection(opts) and self.name in opts:
             raise click.UsageError(
-                "Illegal usage: `{}` is mutually exclusive with arguments `{}`.".format(self.name, ', '.join(self.mutually_exclusive))
+                "Illegal usage: {} is mutually exclusive with arguments `{}`.".format(self.name, ', '.join(self.mutually_exclusive))
             )
 
         return super(MutuallyExclusiveOption, self).handle_parse_result(ctx, opts, args)
@@ -143,7 +143,7 @@ class CommandWrapper(object):
     def stdout_pipe(self, pipe_name='stdout'):
         while self.p.poll() is None:
             line = getattr(self.p, pipe_name).readline()
-            stdout = line.strip()
+            stdout = line.strip('\n')
             if stdout:
                 self.logger.info(stdout)
                 self.stdout += line
@@ -151,7 +151,7 @@ class CommandWrapper(object):
     def stderr_pipe(self, pipe_name='stderr'):
         while self.p.poll() is None:
             line = getattr(self.p, pipe_name).readline()
-            stderr = line.strip()
+            stderr = line.strip('\n')
             if stderr:
                 self.logger.warning(stderr)
 
@@ -162,6 +162,25 @@ class CommandWrapper(object):
             stdout.result()
             stderr.result()
             self.returncode = self.p.returncode
+
+
+class cached_property(object):
+    """ A property that is only computed once per instance and then replaces
+        itself with an ordinary attribute. Deleting the attribute resets the
+        property.
+
+        Source: https://github.com/bottlepy/bottle/commit/fa7733e075da0d790d809aa3d2f53071897e6f76
+        """
+
+    def __init__(self, func):
+        self.__doc__ = getattr(func, '__doc__')
+        self.func = func
+
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+        value = obj.__dict__[self.func.__name__] = self.func(obj)
+        return value
 
 
 def getlogger(name=__name__):

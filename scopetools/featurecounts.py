@@ -1,24 +1,55 @@
 # -*- coding: utf-8 -*-
-from pathlib import Path
-from scopetools.utils import getlogger, CommandWrapper
-import sys
 import re
-import json
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+import pysam
+
 from scopetools.report import Reporter
+from scopetools.utils import getlogger, CommandWrapper
 
 logger = getlogger(__name__)
 logger.setLevel(10)
 
 
+class GeneName(object):
+
+    def __init__(self, annot):
+        self.gtf_file = annot
+        self.id_name = defaultdict(str)
+        self.parse()
+
+    def parse(self):
+        gene_id_pattern = re.compile(r'gene_id "(\S+)";')
+        gene_name_pattern = re.compile(r'gene_name "(\S+)"')
+        with open(self.gtf_file) as f:
+            for line in f.readlines():
+                if line.startswith('#!'):
+                    continue
+                tabs = line.split('\t')
+                gtf_type, attributes = tabs[2], tabs[-1]
+                if gtf_type == 'gene':
+                    gene_id = gene_id_pattern.findall(attributes)[-1]
+                    gene_name = gene_name_pattern.findall(attributes)[-1]
+                    self.id_name[gene_id] = gene_name
+
+    def __contains__(self, item):
+        return item in self.id_name
+
+    def __getitem__(self, item):
+        if item in self.id_name:
+            return self.id_name[item]
+        else:
+            return item
+
+
 class FeatureCountsLogger(object):
     def __init__(self, log, sample):
         self.log = log
-        self.stat_info = [
-            {
-                'attr': 'SampleName',
-                'val': f'{sample}'
-            }
-        ]
+        self.stat_info = {
+            'SampleName': f'{sample}'
+        }
         self.parse_log()
 
     def parse_log(self):
@@ -31,12 +62,30 @@ class FeatureCountsLogger(object):
                 pattern = re.compile(f'(?<={p})\D*(\d*)')
                 vals.append(int(pattern.findall(lines)[0]))
             for attr, val in zip(attrs, vals):
-                self.stat_info.append(
-                    {
-                        'attr': attr,
-                        'val': f'{val} ({val / sum(vals):.2%})'
-                    }
-                )
+                self.stat_info[attr] = f'{val} ({val / sum(vals):.2%})'
+
+
+class Alignment(object):
+
+    def __init__(self, alignment: pysam.AlignedRead):
+        self.alignment = alignment
+        self.__gene_name = None
+
+    @property
+    def gene_id(self):
+        if self.alignment.has_tag('XT'):
+            return self.alignment.get_tag('XT')
+        else:
+            return None
+
+    @property
+    def gene_name(self):
+        return self.__gene_name
+
+    @gene_name.setter
+    def gene_name(self, value):
+        self.__gene_name = value
+        self.alignment.set_tag('XT', self.__gene_name)
 
 
 def featurecounts(ctx, input, annot, sample, outdir, format, nthreads):
@@ -53,7 +102,7 @@ def featurecounts(ctx, input, annot, sample, outdir, format, nthreads):
     else:
         logger.info('featureCounts done!')
 
-        # samtools sort
+    # samtools sort
     samtools_cmd = f'samtools sort -n -@ {nthreads} -o {sample_outdir / sample}_name_sorted.bam {sample_outdir / Path(input).name}.featureCounts.bam'
     samtools_process = CommandWrapper(samtools_cmd, logger=logger)
     if samtools_process.returncode:
@@ -62,12 +111,21 @@ def featurecounts(ctx, input, annot, sample, outdir, format, nthreads):
     else:
         logger.info('samtools done!')
 
+    # convert gene id to gene name in BAM
+    gene_name_dict = GeneName(annot)
+    with pysam.AlignmentFile(f'{sample_outdir / sample}_name_sorted.bam', mode='rb') as f, pysam.AlignmentFile(f'{sample_outdir / sample}_name_sorted.tmp.bam', mode='wb', template=f) as g:
+        for i in f:
+            alignment = Alignment(i)
+            if alignment.gene_id:
+                gene_name = gene_name_dict[alignment.gene_id]
+                alignment.gene_name = gene_name
+            g.write(alignment.alignment)
+    Path(f'{sample_outdir / sample}_name_sorted.tmp.bam').rename(f'{sample_outdir / sample}_name_sorted.bam')
+
     # parse log
     featurecounts_log = FeatureCountsLogger(log=f'{sample_outdir}/{sample}.summary', sample=sample)
-    with open(sample_outdir / 'stat.json', mode='w', encoding='utf-8') as f:
-        json.dump(featurecounts_log.stat_info, f)
 
     # report
     logger.info('generate report start!')
-    Reporter(name='featureCounts', stat_file=sample_outdir / 'stat.json', outdir=sample_outdir.parent)
+    Reporter(name='featureCounts', stat_json=featurecounts_log.stat_info, outdir=sample_outdir.parent)
     logger.info('generate report done!')

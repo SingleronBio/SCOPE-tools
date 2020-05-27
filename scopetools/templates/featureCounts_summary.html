@@ -1,30 +1,23 @@
-      <h2><img data-name="img1" src="./img1.png"/>Feature summary</h2>
-      <p>所有样本Read2的featureCounts统计如下：</p>
-      <table id="example3" class="display" style="width:100%">
-        {% for item in featureCounts_summary %}
-          {% if loop.first %}
-        <thead>
-          <tr>
-            {% for i in item %} 
-            <th>{{ i|e }}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-          {% else %}
-        <tbody>
-          <tr>
-            {% for i in item %}
-            <td>{{ i|e }}</td>
-            {% endfor %}
-          </tr>
-        </tbody>
-          {% endif %}
-        {% endfor %}
-      </table>
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%">
+    <h2>featureCounts summary</h2>
+    <div class="has_desc"></div>
+    <div class="box">
 
-      <div class="annotation">
-      <p>(1) SampleName：样品名</p>
-      <p>(2) Assigned：定位到基因上的Reads数目及比例</p>
-      <p>(3) Unassigned_NoFeatures：未定位到基因上的reads数目及比例</p>
-      <p>(4) Unassigned_Ambiguity：定位在多个基因上的reads数目及比例</p>
-      </div>
+        <table style="float: left; margin-left: 0; margin-right:0; width: 100%">
+            {% for key, value in featureCounts_summary.items() %}
+                <tr>
+                    <td>{{ key|e }}</td>
+                    <td>{{ value|e }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <div class="clear"></div>
+        <div class="description" style="display: none;">
+            <p>SampleName：样本名称</p>
+            <p>Assigned：定位到基因上的Reads数目及比例</p>
+            <p>Unassigned_NoFeatures：未定位到基因上的reads数目及比例</p>
+            <p>Unassigned_Ambiguity：定位在多个基因上的reads数目及比例</p>
+        </div>
+    </div>
+</div>
+

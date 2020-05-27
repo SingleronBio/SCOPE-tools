@@ -1,32 +1,25 @@
-      <h2><img data-name="img1" src="./img1.png"/>Trimmig summary</h2>
-      <p class="table_title" style="font-weight: bold">所有样本Read2数据过滤统计如下：</p>
-      <table id="example1" class="display" style="width:100%">
-        {% for item in cutadapt_summary %}
-          {% if loop.first %}
-        <thead>
-          <tr>
-            {% for i in item %} 
-            <th>{{ i|e }}</th>
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%">
+    <h2>Trimming summary</h2>
+    <div class="has_desc"></div>
+    <div class="box">
+        <table style="float: left; margin-left: 0; margin-right:0; width: 100%">
+            {% for key, value in cutadapt_summary.items() %}
+                <tr>
+                    <td>{{ key|e }}</td>
+                    <td>{{ value|e }}</td>
+                </tr>
             {% endfor %}
-          </tr>
-        </thead>
-          {% else %}
-        <tbody>
-          <tr>
-            {% for i in item %}
-            <td>{{ i|e }}</td>
-            {% endfor %}
-          </tr>
-        </tbody>
-          {% endif %}
-        {% endfor %}
-      </table>
-      <div class="annotation">
-      <p>(1) SampleName：样品名</p>
-      <p>(2) Total reads processed：处理的Reads数</p>
-      <p>(3) Reads with adapters：包含接头序列的Reads数</p>
-      <p>(4) Reads that were too short：trim掉接头序列后Reads长度小于20 bp的Reads数目</p>
-      <p>(5) Reads written (passing filters)：通过过滤的Reads数</p>
-      <p>(6) Total basepairs processed：处理的碱基数</p>
-      <p>(7) Total written (filtered)：通过过滤的碱基数</p>
-      </div>
+        </table>
+        <div class="clear"></div>
+        <div class="description" style="display: none;">
+            <p>SampleName：样本名称</p>
+            <p>Total reads processed：处理的Reads数</p>
+            <p>Reads with adapters：包含接头序列的Reads数</p>
+            <p>Reads that were too short：trim掉接头序列后Reads长度小于20 bp的Reads数目</p>
+            <p>Reads written (passing filters)：通过过滤的Reads数</p>
+            <p>Total basepairs processed：处理的碱基数</p>
+            <p>Quality-trimmed：过滤低质量的Reads数</p>
+            <p>Total written (filtered)：通过过滤的碱基数</p>
+        </div>
+    </div>
+</div>

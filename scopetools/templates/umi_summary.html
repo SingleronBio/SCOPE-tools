@@ -1,0 +1,158 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%">
+    <h2>UMI summary</h2>
+    <div class="has_desc"></div>
+    <div class="box">
+        <table style="float: left; margin-left: 0; margin-top: 0; margin-right:0; width: 100%">
+            <div id="myDivUMI" style="float: left; margin-left: 0; margin-right:0; width: 100%">
+                <script>
+                    var index1 = [];
+                    for (var i = 0; i < {{ UMI_summary['CB_num'] }}; i++) {
+                        index1.push(i + 1)
+                    }
+                    var index2 = [];
+                    for (var i = 0; i < {{ UMI_summary['UB_num'] }}; i++) {
+                        index2.push(i + 1 + {{ UMI_summary['CB_num'] }})
+                    }
+                    var trace0 = {
+                        x: index1,
+                        y: {{ UMI_summary['Cells'] }},
+                        mode: 'lines',
+                        name: 'Cells',
+                        line: {
+                            color: '#337bb6',
+                            width: 3
+                        }
+                    };
+                    var trace1 = {
+                        x: index2,
+                        y: {{ UMI_summary['Background'] }},
+                        mode: 'lines',
+                        name: 'Background',
+                        line: {
+                            color: '#D3D3D3',
+                            width: 3
+                        }
+                    };
+                    var data = [trace0, trace1];
+                    var layout = {
+                        height: 313,
+                        width: 470,
+                        margin: {
+                            l: 50,
+                            r: 0,
+                            b: 30,
+                            t: 30,
+                        },
+                        title: 'Cells',
+                        xaxis: {
+                            title: 'Barcodes',
+                            type: 'log'
+                        },
+                        yaxis: {
+                            title: 'UMI counts',
+                            type: 'log'
+                        },
+                    }
+                    var config = {
+                        modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d",
+                            "hoverCompareCartesian", "toggleSpikelines", "toImage", "autoScale2d"],
+                        displaylogo: false,
+                        showTips: true,
+                        responsive: true,
+                    }
+                    Plotly.newPlot('myDivUMI', data, layout, config);
+                </script>
+            </div>
+        </table>
+
+        <table style="float: left; margin-left: 0; margin-top: 0; margin-right:0; width: 100%">
+            <div id="myDivSaturation" style="float: left;margin-left: 0; margin-top: 0; margin-right:0; width: 100%">
+                <script>
+                    var data = [{
+                        x: {{ UMI_summary['percentile']|safe }},
+                        y: {{ UMI_summary['Saturation']|safe }},
+                        mode: 'lines'
+                    }];
+                    var layout = {
+                        height: 313,
+                        width: 400,
+                        margin: {
+                            l: 45,
+                            r: 35,
+                            b: 30,
+                            t: 30,
+                        },
+                        title: {
+                            text: 'Sequencing Saturation',
+                            font: {
+                                color: '#555',
+                            }
+                        },
+                        yaxis: {
+                            title: 'Sequencing Saturation(%)',
+                            range: [0, 100]
+                        },
+                        showlegend: false,
+                    };
+                    var config = {
+                        modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d",
+                            "hoverCompareCartesian", "toggleSpikelines", "toImage", "autoScale2d"],
+                        displaylogo: false,
+                        showTips: true,
+                        responsive: true,
+                    }
+                    Plotly.newPlot('myDivSaturation', data, layout, config);
+                </script>
+            </div>
+        </table>
+
+        <table style="float: left; margin-left: 0; margin-top: 0; margin-right:0; width: 100%">
+            <div id="myDivMedianGeneNum" style="float: left; margin-left: 0; margin-top: 0; margin-right:0; width: 100%">
+                <script>
+                    var data = [{
+                        x: {{ UMI_summary['percentile']|safe }},
+                        y: {{ UMI_summary['MedianGeneNum']|safe }},
+                        mode: 'lines'
+                    }];
+                    var layout = {
+                        height: 313,
+                        width: 400,
+                        margin: {
+                            l: 45,
+                            r: 35,
+                            b: 30,
+                            t: 30,
+                        },
+                        title: 'Median Genes per Cell',
+                        yaxis: {
+                            title: 'Median Genes per Cell',
+                        },
+                        showlegend: false,
+                    };
+                    //  Modebar Buttons names at https://github.com/plotly/plotly.js/blob/master/src/components/modebar/buttons.js
+                    //  - sendDataToCloud
+                    //  - (2D): zoom2d, pan2d, select2d, lasso2d, zoomIn2d, zoomOut2d, autoScale2d, resetScale2d
+                    //  - (Cartesian): hoverClosestCartesian, hoverCompareCartesian
+                    //  - (3D): zoom3d, pan3d, orbitRotation, tableRotation, handleDrag3d, resetCameraDefault3d, resetCameraLastSave3d, hoverClosest3d
+                    //  - (Geo): zoomInGeo, zoomOutGeo, resetGeo, hoverClosestGeo
+                    //  - hoverClosestGl2d, hoverClosestPie, toggleHover, resetViews
+                    var config = {
+                        modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d",
+                            "hoverCompareCartesian", "toggleSpikelines", "toImage", "autoScale2d"],
+                        displaylogo: false,
+                        showTips: true,
+                        responsive: true,
+                    }
+                    Plotly.newPlot('myDivMedianGeneNum', data, layout, config);
+                </script>
+            </div>
+        </table>
+
+        <div class="clear"></div>
+        <div class="description" style="display: none;">
+            <p>图1：横轴是barcodes，纵轴是UMI数量，蓝色线条为检测到的细胞，灰色线为非细胞部分</p>
+            <p>图2：显示了测序饱和度指标同每个细胞的平均read数之间的函数关系。测序饱和度是对观察到的文库复杂性的一种度量，当所有转换的mRNA转录本被测序后，其复杂度接近1.0。</p>
+            <p>图3：显示了每个细胞的中位基因同每个细胞的平均reads数之间的函数关系。</p>
+        </div>
+    </div>
+</div>
