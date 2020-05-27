@@ -41,15 +41,15 @@ install:
   - conda info
   # this is to ensure dependencies
   - conda build conda.recipe --no-test
-  - conda install --use-local scopetools
+  - conda install --use-local scope-tools
 
 
 # Not a .NET project, we build package in the install step instead
 build: false
 
 test_script:
-  - py.test --color=yes -v --cov scopetools --cov-report xml tests
+  - py.test --color=yes -v --cov scope-tools --cov-report xml tests
 
 on_success:
   - conda install -c conda-forge codecov
-  - codecov --env PYTHON_VERSION --file C:\projects\scopetools\coverage.xml
+  - codecov --env PYTHON_VERSION --file C:\projects\SCOPE-tools\coverage.xml

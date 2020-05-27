@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
-import click
-from scopetools.utils import BarcodeType, AdapterType, MultipleOption
 from pathlib import Path
+
+import click
+
+from scopetools.utils import BarcodeType, AdapterType, MultipleOption, MutuallyExclusiveOption
 
 __version__ = '0.1.0'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 @click.group(chain=True, context_settings=CONTEXT_SETTINGS)
-@click.version_option(version=__version__, prog_name='scopetools')
+@click.version_option(version=__version__, prog_name='scope-tools')
 def cli():
     """
     Single Cell Omics Preparation Entity Tools
@@ -21,43 +23,61 @@ def cli():
 @click.option('--fq2', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="read2 fq file")
 @click.option('--sample', type=click.STRING, required=True, help="sample name")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), required=True, help="output dir")
-@click.option('--pattern', type=BarcodeType(), default='C8L16C8L16C8U8T18', show_default=True, help="read1 pattern, C: cellbarcode, L: linker, U: UMI, T: polyT")
-@click.option('--whitelist', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), default=Path(__file__).resolve().parent.joinpath('extra/whitelist/scope/bclist'), show_default=True, help="cell barcode list")
-@click.option('--linkers', multiple=True, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), default=[Path(__file__).resolve().parent.joinpath('extra/whitelist/scope/linker1'), Path(__file__).resolve().parent.joinpath('extra/whitelist/scope/linker2')], show_default=True, help="linkers")
+@click.option('--bctype', cls=MutuallyExclusiveOption, type=click.Choice(['SCOPEv2', 'SCOPEv1', '10X', 'Dropseq', 'inDrop', 'BD', 'other']), mutually_exclusive=['pattern', 'whitelist', 'linkers'], default=None, help='bctype help')
+@click.option('--pattern', cls=MutuallyExclusiveOption, type=BarcodeType(), mutually_exclusive=['bctype'], default=None, help="read1 pattern, C: cellbarcode, L: linker, U: UMI, T: polyT")
+@click.option('--whitelist', cls=MutuallyExclusiveOption, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), mutually_exclusive=['bctype'], default=None, help="cell barcode list")
+@click.option('--linker', cls=MutuallyExclusiveOption, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), mutually_exclusive=['bctype'], default=None, help="linkers")
 @click.option('--lowQual', type=click.IntRange(0, 30), default=14, show_default=True, help="max phred of base as low quality")
 @click.option('--lowNum', type=click.INT, default=2, show_default=True, help="max number with low quality allowed")
 @click.pass_context
-def barcode_pipe(ctx, fq1, fq2, sample, outdir, pattern, whitelist, linkers, lowqual, lownum):
+def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, lowqual, lownum):
     """
     extract barcode and umi description
     """
+    if bctype:
+        if bctype == 'SCOPEv2':
+            pattern = 'C8L16C8L16C8L1U8T18'
+            whitelist = Path(__file__).resolve().parent.joinpath(f'extra/whitelist/SCOPEv2/bclist')
+            linker = Path(__file__).resolve().parent.joinpath(f'extra/whitelist/SCOPEv2/linker')
+        elif bctype == 'SCOPEv1':
+            pattern = 'C12U8T30'
+            whitelist = None
+            linker = None
+        elif bctype == '10X':
+            pattern = 'C16U12T30'
+            whitelist = None
+            linker = None
+    elif pattern:
+        pass
+        # raise click.BadParameter("{} is not a valid adapter pattern".format(pattern))
+    else:
+        raise click.BadParameter("Error: Illegal usage: [bctype] or [pattern whitelist linkers] must have one")
     from scopetools.barcode import barcode
-    click.echo('barcode pipeline')
-    barcode(ctx, fq1, fq2, sample, outdir, pattern, whitelist, linkers, lowqual, lownum)
+    barcode(ctx=ctx, fq1=fq1, fq2=fq2, sample=sample, outdir=outdir, pattern=pattern, whitelist=whitelist, linker=linker, lowqual=lowqual, lownum=lownum)
 
 
 @cli.command(name='cutadapt', short_help="cutadapt short help")
 @click.option('--fq', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="fq help")
 @click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), required=True, help="outdir help")
-@click.option('--adapter', cls=MultipleOption, type=AdapterType(), nargs=-1, default=['polyT=A{20}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'], help="adapter help")
+@click.option('--adapter', cls=MultipleOption, type=AdapterType(), nargs=-1, default=['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'], help="adapter help")
 @click.option('--minimum-length', type=click.INT, default=20, show_default=True, help="minimum length help")
 @click.option('--nextseq-trim', type=click.INT, default=20, show_default=True, help="nextseq trim help")
 @click.option('--overlap', type=click.INT, default=5, show_default=True, help="overlap help")
+@click.option('--thread', type=click.INT, default=2, show_default=True, help="thread help")
 @click.pass_context
-def cutadapt_pipe(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap):
+def cutadapt_pipe(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread):
     """
     cutadapt description
     """
     from scopetools.cutadapt import cutadapt
-    click.echo('cutadapt pipeline')
-    cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap)
+    cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread)
 
 
 @cli.command(name="STAR", short_help="STAR short help")
 @click.option('--fq', type=click.Path(exists=True, file_okay=True, readable=True), required=True, help="fq help")
-@click.option('--refFlat', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, default='/SGRNJ/Public/Database/genome/homo_mus/homo_mus.refFlat', help="refFlat help")
-@click.option('--genomeDir', type=click.Path(file_okay=False, dir_okay=True, readable=True), required=True, default='/SGRNJ/Public/Database/genome/homo_mus', help="genome help")
+@click.option('--refFlat', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="refFlat help")
+@click.option('--genomeDir', type=click.Path(file_okay=False, dir_okay=True, readable=True), required=True, help="genome help")
 @click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), required=True, help="outdir help")
 @click.option('--readFilesCommand', type=click.Choice(['zcat', 'bzcat', '-']), default='zcat', show_default=True, help='readFilesCommand help')
@@ -67,7 +87,6 @@ def star_pipe(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, run
     """
     STAR description
     """
-    click.echo('STAR pipeline')
     from scopetools.star import star
     star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn)
 
@@ -84,7 +103,6 @@ def featurecounts_pipe(ctx, input, annot, sample, outdir, format, nthreads):
     """
     featureCounts description
     """
-    click.echo('featureCounts pipeline')
     from scopetools.featurecounts import featurecounts
     featurecounts(ctx, input, annot, sample, outdir, format, nthreads)
 
@@ -99,29 +117,35 @@ def count_pipe(ctx, bam, sample, outdir, cells):
     """
     count description
     """
-    click.echo('count pipeline')
     from scopetools.count import count
     count(ctx, bam, sample, outdir, cells)
 
 
 @cli.command(name='cluster', short_help="cluster short help")
-@click.option('--input', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="scRNA-seq file or path")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), required=True, help="outdir help")
-@click.option('--filter-genome', type=click.STRING, default='None', show_default=True, help="filter_genome not analysis")
-@click.option('--max-genes', type=click.INT, default=2500, show_default=True, help="the max genes in each cell")
-@click.option('--max-permito', type=click.FLOAT, default=0.05, show_default=True, help="the max percent_mito in each cell")
-@click.option('--neighbors', type=click.INT, default=15, show_default=True, help="the neighbors")
-@click.option('--pc', type=click.INT, default=40, show_default=True, help="Use this many PCs")
-@click.option('--rgenes-method', type=click.Choice(['wilcoxon', 't-test', 'logreg']), default='wilcoxon', show_default=True, help="rank genes method,t-test,wilcoxon,logreg")
-@click.option('--cluster-algo', type=click.Choice(['leiden', 'louvain']), default='leiden', help="cluster algorithm,leiden or louvain")
-@click.option('--plot-method', type=click.Choice(['umap', 'tsne']), default='umap', show_default=True, help="cluster in umap or tsne")
-def cluster_pipe(ctx, input, outdir, filter_genome, max_genes, max_permito, neighbors, pc, rgenes_method, cluster_algo, plot_method):
+@click.option('--sample', type=click.STRING, required=True, help="sample help")
+@click.option('--matrix', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="matrix help")
+@click.option('--barcodes', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="barcodes help")
+@click.option('--genes', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="genes help")
+@click.option('--n_top', type=click.INT, default=30, show_default=True, help="Number of top")
+@click.option('--min_genes', type=click.INT, default=200, show_default=True, help="Minimum number of genes expressed required for a cell to pass filtering")
+@click.option('--min_cells', type=click.INT, default=3, show_default=True, help="Minimum number of cells expressed required for a gene to pass filtering")
+@click.option('--n_genes_by_counts', type=click.INT, default=2500, show_default=True, help="Minimum number of expressed genes required for a cell to pass filtering")
+@click.option('--pct_counts_mt', type=click.INT, default=5, show_default=True, help="Maximum pct_counts_mt required for a cell to pass filtering")
+@click.option('--exclude_highly_expressed', type=click.BOOL, default=False, show_default=True, help="Exclude (very) highly expressed genes for the computation of the normalization factor (size factor) for each cell")
+@click.option('--max_fraction', type=click.FLOAT, default=0.05, show_default=True, help="Consider cells as highly expressed that have more counts than max_fraction of the original total counts in at least one cell")
+@click.option('--n_top_genes', type=click.INT, default=None, show_default=True, help="Number of highly-variable genes to keep.")
+@click.option('--max_value', type=click.FLOAT, default=None, show_default=True, help="Clip (truncate) to this value after scaling")
+@click.option('--n_neighbors', type=click.IntRange(2, 100), default=15, show_default=True, help="The size of local neighborhood (in terms of number of neighboring data points) used for manifold approximation")
+@click.option('--n_pcs', type=click.INT, default=None, show_default=True, help="Use this many PCs")
+@click.pass_context
+def cluster_pipe(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs):
     """
     cluster description
     """
     click.echo('cluster pipeline')
     from scopetools.cluster import cluster
-    cluster(ctx, input, outdir, filter_genome, max_genes, max_permito, neighbors, pc, rgenes_method, cluster_algo, plot_method)
+    cluster(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs)
 
 
 @cli.command(name='run', help="run short help")

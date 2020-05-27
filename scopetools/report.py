@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from pathlib import Path
+import base64
 import json
-import pandas as pd
-from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
+from pathlib import Path
+
+from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 env = Environment(
     loader=FileSystemLoader(Path(__file__).parent / 'templates'),
@@ -11,11 +12,12 @@ env = Environment(
 
 
 class Reporter(object):
-    def __init__(self, name, stat_file, outdir: Path, plot=None):
+    def __init__(self, name, stat_json: dict, outdir: Path, plot=None, img=None):
         self.name = name
-        self.stat_file = stat_file
+        self.stat_json = stat_json
         self.outdir = outdir
         self.plot = plot
+        self.img = img
         self.get_report()
 
     def get_report(self):
@@ -27,11 +29,16 @@ class Reporter(object):
             with open(json_file, encoding='utf-8', mode='r') as f:
                 data = json.load(f)
 
-        df = pd.read_json(self.stat_file)
-        data[self.name + '_summary'] = df.values.tolist()
+        data[self.name + '_summary'] = self.stat_json
 
         if self.plot:
             data[self.name + '_plot'] = self.plot
+
+        if self.img:
+            data[self.name + '_img'] = {}
+            for name in self.img:
+                with open(self.img[name], 'rb') as f:
+                    data[self.name + '_img'][name] = base64.b64encode(f.read()).decode()
 
         with open(self.outdir / 'report.html', encoding='utf-8', mode='w') as f:
             html = template.render(data)

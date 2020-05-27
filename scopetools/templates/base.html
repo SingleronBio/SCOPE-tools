@@ -1,143 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1" />
-  <script> {% include "./js/jquery.min.js" %} </script>
-  <style> {% include "./css/bootstrap.min.css" %} </style>
-  <script> {% include "./js/bootstrap.min.js" %} </script>
-  <script> {% include "./js/plotly-latest.min.js" %} </script>
-  <style> {% include "./css/jquery.dataTables.css" %} </style>
-  <script> {% include "./js/jquery.dataTables.js" %} </script>
-  <script> 
-    $(document).ready(
-      function() {
-        $.extend( $.fn.dataTable.defaults, {
-          searching: false,
-          ordering: true,
-          paging: false,
-          info: false,
-          scrollX: 300,
-          scrollCollapse: true,
-          columnDefs: [
-            {
-              targets: '_all',
-              className: 'dt-left'
-            }
-          ],
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1"/>
+    <title>Report</title>
+
+    <script> {% include "./js/jquery.min.js" %} </script>
+    <script> {% include "./js/plotly-latest.min.js" %} </script>
+    <script type="text/javascript">
+        $(function () {
+            $(".has_desc").click(function () {
+                $(this).next().children(".description").toggle();
+            });
         });
-        $('#example0').DataTable();
-        $('#example1').DataTable();
-        $('#example2').DataTable();
-        $('#example3').DataTable();
-        $('#example4').DataTable();
+    </script>
 
-        var img1=$("img[data-name='img1']");
-        for (x of img1) {
-            x.src={% include "img1.html" %};
+    <style>
+        .box {
+            margin-top: 2px;
+            margin-bottom: 2px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.5);
+            padding: 15px 14px;
+            border-radius: 5px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+
         }
-      }
-  );
-  </script> 
-  <style>
-    * {
-      -webkit-box-sizing: border-box;
-      -moz-box-sizing: border-box;
-      box-sizing: border-box;
-    }
-    .placeholder {
-      height: 1px;
-      margin-top: 52px;
-      margin-bottom: 24px;
-    }
-    .tab {
-      margin: 0 auto;
-      padding: 0;
-      width: 1000px;
-    }
-    .logo-container {
-      height: 50px;
-      width: 200px;
-      position: relative;
-    }
-    .logo {
-      position: absolute;
-      height: 50px;
-    }
-    .annotation {
-      margin-top: 25px;
-    }
-    .annotation p {
-      text-align: left;
-      margin-top: 0px;
-      margin-bottom: 0px;
-      line-height: 16px!important;
-      font-size: 14px !important;
-    }
-    thead th {
-      color: #337bb6;
-    }
-    h2 {
-      text-align: left;
-      font-size: 18px;
-      margin-top: 25px;
-      margin-bottom: 25px;
-      letter-spacing: 2px;
-      line-height: 20px;
-      font-weight: bold;
-    }
-    h2 img {
-      width: 22px;
-      margin-right: 10 px;
-    }
-    .center {
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      width: 50%;
-    }
 
-  </style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1%;
+            border-spacing: 0 2em;
+        }
+
+        th, td {
+            border-bottom: 1px solid #ddd;
+
+        }
+
+        .box table td:first-child {
+            text-align: left;
+            padding-bottom: 5px;
+        }
+
+        .box table td {
+            text-align: right;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        .logo_container {
+            height: 50px;
+            width: 150px;
+            position: relative;
+        }
+
+        .description {
+            margin-top: 5px;
+        }
+
+        .description p {
+            text-align: left;
+            margin-top: 0px;
+            margin-bottom: 0px;
+            line-height: 16px !important;
+            font-size: 14px !important;
+        }
+
+        .has_desc:after {
+            position: relative;
+            background: rgba(0, 0, 0, 0.1);
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 18px;
+            cursor: pointer;
+            float: right;
+            text-align: center;
+            line-height: 20px;
+            content: '?';
+        }
+
+        .clear {
+            clear: both
+        }
+
+        .js-plotly-plot .plotly .modebar {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.7) none repeat scroll 0% 0%;
+        }
+
+    </style>
 </head>
 <body>
-  <header class="navbar navbar-fixed-top" style="background: #ffffff">
+<header class="navbar navbar-fixed-top" style="background: #ffffff">
     <div class="navbar-brand">
-      <!-- <div class="logo-container">
-        <img class="logo" src="data:image/png;base64,{{logo_img}}">
-      <!-- </div> -->
-          {% include "logo.html"%}
+        {% include "logo.html" %}
     </div>
-  </header>
-  <div class="placeholder"></div>
-  <div class="container">
+</header>
+<div class="container">
     <div class="tab">
 
-      <h1 align="center">scRNA-Seq Summary </h1>
-      {% if barcode_summary is defined %}
-      {% include "barcode_summary.html"%}
-      {% endif %}
+        <h1 align="center">scRNA-Seq Summary </h1>
+        {% if barcode_summary is defined %}
+            {% include "barcode_summary.html" %}
+        {% endif %}
 
-      {% if cutadapt_summary is defined %}
-      {% include "cutadapt_summary.html"%}
-      {% endif %}
+        {% if cutadapt_summary is defined %}
+            {% include "cutadapt_summary.html" %}
+        {% endif %}
 
-      {% if STAR_summary is defined %}
-      {% include "STAR_summary.html"%}
-      {% endif %}
+        {% if STAR_summary is defined %}
+            {% include "STAR_summary.html" %}
+        {% endif %}
 
-      {% if featureCounts_summary is defined%}
-      {% include "featureCounts_summary.html"%}
-      {% endif %}
+        {% if featureCounts_summary is defined %}
+            {% include "featureCounts_summary.html" %}
+        {% endif %}
 
-      {% if umi_summary is defined %}
-      {% include "umi_summary.html"%}
-      {% endif %}
+        {% if count_summary is defined %}
+            {% include "count_summary.html" %}
+        {% endif %}
 
-      {% if umicount_distribution is defined %}
-      {% include "umicount_distribution_summary.html"%}
-      {% endif %}
+        {% if UMI_summary is defined %}
+            {% include "umi_summary.html" %}
+        {% endif %}
+
+        {% if cluster_img is defined %}
+            {% include "cluster_summary.html" %}
+        {% endif %}
     </div>
-  </div>
-
+</div>
 </body>
 </html>
