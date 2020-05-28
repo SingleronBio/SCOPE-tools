@@ -115,6 +115,7 @@
                     --outdir ./scopev2 \
                     --adapter p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC polyT=A{18} \
                     --overlap 5
+
         * 参数说明
             * --fq: barcode处理后的read2 fastq文件
             * --sample: 样本名称
@@ -122,16 +123,35 @@
             * --adapter: 接头序列, 可多次使用, 默认: p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC polyT=A{18}
             * --overlap: 认为检测到接头时重叠碱基数, 默认: 5
             * --minimum-length: 允许的最短序列长度, 默认: 20
-            * --nextseq-trim: trim使用的质量值 (忽略G, 针对双色试剂, 如NextSeq), 默认: 20
+            * --nextseq-trim: trim使用的质量值 (忽略G, 针对双色试剂, 如 NextSeq_), 默认: 20
             * --thread: 线程数, 默认: 2
+
+            .. _NextSeq: https://sequencing.qcfail.com/articles/illumina-2-colour-chemistry-can-overcall-high-confidence-g-bases/
 
     * STAR
 
-        描述
+        调用 STAR_ 将read2序列定位到基因组上.
+
+        .. _STAR: https://github.com/alexdobin/STAR
 
         * 示例
+            .. code-block:: bash
+
+                scope STAR \
+                    --fq ./scopev2/02.cutadapt/scopev2_2.fq.gz \
+                    --sample scopev2 \
+                    --outdir ./scopev2 \
+                    --refFlat ./references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.refFlat \
+                    --genomeDir ./references/Homo_sapiens/Ensembl/GRCh38
 
         * 参数说明
+            * --fq: cutadapt处理后的read2 fastq文件
+            * --sample: 样本名称
+            * --readFilesCommand: STAR读取输入文件的命令, 默认: zcat
+            * --genomeDir: 参考基因组路径, 包含STAR所建索引
+            * --runThreadN: 线程数, 默认: 2
+            * --outdir: 输出路径
+            * --refFlat: refFlat文件路径
 
     * featureCounts
 
