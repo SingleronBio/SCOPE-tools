@@ -78,7 +78,7 @@
                     --fq1 ./rawdata/R2005073_L1_1.fq.gz \
                     --fq2 ./rawdata/R2005073_L1_2.fq.gz \
                     --sample scopev2 \
-                    --outdir ./scope \
+                    --outdir ./scopev2 \
                     --bctype SCOPEv2
 
         * 参数说明
@@ -93,18 +93,37 @@
 
                 从第一个碱基开始，为C位置碱基构成cell barcode, 为U位置的碱基构成UMI, 第一段为L的碱基为linker1, 第二段为L的碱基为linker2, 末尾T为polyT.
 
-            * --whitelist 自定义的cell barcode白名单文件.
-            * --linker: 自定义的linker白名单文件.
+            * --whitelist 自定义的cell barcode白名单文件
+            * --linker: 自定义的linker白名单文件
             * --lowQual: 定义为低质量碱基的质量值, 默认: 14
             * --lowNum: 允许的低质量碱基的个数, 默认: 2
 
     * cutadapt
 
-        描述
+        调用 cutadapt_ 对read2进行质控.
+            * trim接头序列
+            * trim两端低质量碱基
+
+            .. _cutadapt: https://en.wikipedia.org/wiki/Hamming_distance
 
         * 示例
+            .. code-block:: bash
 
+                scope cutadapt \
+                    --fq ./scopev2/01.barcode/scopev2_2.fq.gz \
+                    --sample scopev2 \
+                    --outdir ./scopev2 \
+                    --adapter p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC polyT=A{18} \
+                    --overlap 5
         * 参数说明
+            * --fq: barcode处理后的read2 fastq文件
+            * --sample: 样本名称
+            * --outdir: 输出路径
+            * --adapter: 接头序列, 可多次使用, 默认: p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC polyT=A{18}
+            * --overlap: 认为检测到接头时重叠碱基数, 默认: 5
+            * --minimum-length: 允许的最短序列长度, 默认: 20
+            * --nextseq-trim: trim使用的质量值 (忽略G, 针对双色试剂, 如NextSeq), 默认: 20
+            * --thread: 线程数, 默认: 2
 
     * STAR
 
