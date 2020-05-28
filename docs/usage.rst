@@ -7,12 +7,10 @@
 
 #. 示例数据
 
-    下载测试样本链接，数据存储于Zenodo，Open Science Framewor，Dataverse之类。
-    scope
-    10X
-    dropseq
-    indrop
-    BD Rhapsody
+
+    示例的样本数据存储于 `Open Science Framework`_. 目前已经上传SCOPEv2样本数据, 其余类型样本SCOPEv1, 10X, dropseq, indrop, BD Rhapsody待测试上传.
+
+    .. _Open Science Framework: https://osf.io/792wz/?view_only=f0345853d9b141708be8a533d09ea93c
 
 #. 快速使用
 
@@ -36,7 +34,7 @@
 
 #. 使用说明
 
-    SCOPE-tools包含6个子命令，分别是barcode，cutadapt，STAR，featureCounts，count，cluster和run。
+    SCOPE-tools包含7个子命令, 分别是barcode, cutadapt, STAR, featureCounts, count, cluster和run.
 
     .. code-block:: bash
 
@@ -59,14 +57,46 @@
           featureCounts  featureCounts short help
           run            run short help
 
-
     * barcode
 
-        描述
+        基于read1序列信息 (barcode序列, linker序列, 质量值和polyT长度) 过滤, 提取并矫正barcode, 将矫正后的barcode和原始的UMI序列添加到read2的ID中.
+
+        过滤规则:
+            #. 过滤polyT碱基数目<10的reads
+            #. 过滤barcode和UMI碱基质量值低于14的个数>2
+            #. 过滤两段接头中任何一段中错配碱基数>1
+            #. 过滤三段barcode中错配碱基数和>1
+
+        barcode矫正规则:
+            将未出现在whitelist中的barcode, 矫正为与whitelist中 汉明距离_ 为1的barcode.
+                .. _汉明距离: https://en.wikipedia.org/wiki/Hamming_distance
 
         * 示例
+            .. code-block:: bash
+
+                scope barcode \
+                    --fq1 ./rawdata/R2005073_L1_1.fq.gz \
+                    --fq2 ./rawdata/R2005073_L1_2.fq.gz \
+                    --sample scopev2 \
+                    --outdir ./scope \
+                    --bctype SCOPEv2
 
         * 参数说明
+            * --fq1: read1 fastq文件路径
+            * --fq2: read2 fastq文件路径
+            * --sample: 样本名称
+            * --outdir: 输出路径
+            * --bctype: 预置的接头类型
+            * --pattern: 自定义的接头结构, 字母C, L, U, T分别表示cell barcode、linker、UMI、T碱基, 数字表示碱基长度. C8L16C8L16C8L1U8T18即表示以下结构：
+
+                CCCCCCCCLLLLLLLLLLLLLLLLCCCCCCCCLLLLLLLLLLLLLLLLCCCCCCCCLUUUUUUUUTTTTTTTTTTTTTTTTTT
+
+                从第一个碱基开始，为C位置碱基构成cell barcode, 为U位置的碱基构成UMI, 第一段为L的碱基为linker1, 第二段为L的碱基为linker2, 末尾T为polyT.
+
+            * --whitelist 自定义的cell barcode白名单文件.
+            * --linker: 自定义的linker白名单文件.
+            * --lowQual: 定义为低质量碱基的质量值, 默认: 14
+            * --lowNum: 允许的低质量碱基的个数, 默认: 2
 
     * cutadapt
 
