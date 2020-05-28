@@ -155,7 +155,7 @@
 
     * featureCounts
 
-        调用 featureCounts_ 将定位到基因组上的reads，进一步定位到基因上
+        调用 featureCounts_ 将定位到基因组上的reads, 进一步定位到基因上.
 
         .. _featureCounts: http://bioinf.wehi.edu.au/featureCounts/
 
@@ -164,7 +164,7 @@
 
                 scope featureCounts \
                     --bam ./scopev2/03.STAR/scopev2_Aligned.sortedByCoord.out.bam \
-                    --annot .references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf \
+                    --annot ./references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf \
                     --sample scopev2 \
                     --outdir ./scopev2
 
@@ -178,11 +178,33 @@
 
     * count
 
-        描述
+        对同一barcode内比对到同一基因的UMI序列进行校正, 之后进行UMI计数; 细胞数目评估(cell-calling); 输出单细胞基因表达矩阵.
+
+        UMI矫正规则:
+            #. 对同一barcode中，比对到同一gene_id下的umi间进行校正
+            #. 若不存在mismatch为1的UMI，则取 **原始UMI** 为最终UMI;
+            #. 若存在mismatch为1的UMI，取 **readcount数最大** 的为最终UMI；
+            #. 若readcount数相同，则取 **序列字符排序最大** 的为最终UMI。
+
+        细胞数目评估规则:
+            #. 以UMI count降序对barcode排序
+            #. 取第预设细胞数目*0.01为基准细胞
+            #. 取基准细胞的UMI count*0.1为阈值, 大于阈值则判定为细胞
 
         * 示例
+            .. code-block:: bash
+
+                scope count \
+                    --bam ./scopev2/04.featureCounts/scopev2_name_sorted.bam \
+                    --cells 3000 \
+                    --sample scopev2 \
+                    --outdir ./scopev2
 
         * 参数说明
+            * --bam: featureCounts输出的bam文件
+            * --sample: 样本名称
+            * --cells: 预估细胞数, 默认: 3000
+            * --outdir: 输出路径
 
     * cluster
 
