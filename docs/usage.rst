@@ -155,11 +155,26 @@
 
     * featureCounts
 
-        描述
+        调用 featureCounts_ 将定位到基因组上的reads，进一步定位到基因上
+
+        .. _featureCounts: http://bioinf.wehi.edu.au/featureCounts/
 
         * 示例
+            .. code-block:: bash
+
+                scope featureCounts \
+                    --bam ./scopev2/03.STAR/scopev2_Aligned.sortedByCoord.out.bam \
+                    --annot .references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf \
+                    --sample scopev2 \
+                    --outdir ./scopev2
 
         * 参数说明
+            * --bam: STAR比对并排序后的bam文件
+            * --sample: 样本名称
+            * --annot: 基因组注释文件, gtf格式
+            * --nthreads: 线程数, 默认: 2
+            * --format: 输入文件的格式, 默认: BAM
+            * --outdir: 输出路径
 
     * count
 
