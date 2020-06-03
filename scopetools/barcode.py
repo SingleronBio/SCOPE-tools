@@ -4,7 +4,6 @@ import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import List, Dict, Tuple
 
 import numpy as np
@@ -358,7 +357,6 @@ def barcode(
             whitelist_list.append(line.strip())
     cell_dict = MisSeq(whitelist_list)
 
-    linker_list = []
     with open(linker, encoding='utf-8', mode='r')as f:
         length = [end - start for start, end in zip(barcode_pattern['L'].start, barcode_pattern['L'].end)]
         linker_list = [[] for i in range(len(length))]
@@ -369,7 +367,7 @@ def barcode(
                 linkers = linkers[val:]
     linkers_dict = [MisSeq(linker) for linker in linker_list]
 
-    sample_outdir = Path(outdir, sample, '01.barcode')
+    sample_outdir = outdir / sample / '01.barcode'
     sample_outdir.mkdir(parents=True, exist_ok=True)
     clean_fastq = sample_outdir / f'{sample}_2.fq.gz'
 
@@ -404,7 +402,6 @@ def barcode(
     umi_q30 = cell_umi_quality_array[cell_len:, 30:].sum() / cell_umi_quality_array[cell_len:].sum()
 
     stat_info = {
-        'SampleName': sample,
         'Number of Reads': SEQ_INFO.total_num,
         'Valid Reads': f'{SEQ_INFO.clean_num} ({SEQ_INFO.clean_num / SEQ_INFO.total_num:.2%})',
         'Valid Barcodes': len(SEQ_INFO.cell_dict),
@@ -430,7 +427,7 @@ def barcode(
     df = pd.DataFrame(cell_umi_quality_array)
     df.index += 1
     df.to_csv(
-        sample_outdir / 'cell_umi_qualitye.csv',
+        sample_outdir / 'cell_umi_quality.csv',
         mode='w',
         encoding='utf-8',
         header=range(1, cell_len + umi_len)

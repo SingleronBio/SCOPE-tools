@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
 import sys
-from pathlib import Path
 
 from scopetools.report import Reporter
 from scopetools.utils import getlogger, CommandWrapper
@@ -14,9 +13,7 @@ class STARLogger(object):
     def __init__(self, star_log, picard_log, sample):
         self.star_log = star_log
         self.picard_log = picard_log
-        self.stat_info = {
-            'SampleName': f'{sample}'
-        }
+        self.stat_info = {}
         self.plot = {}
         self.parse_star()
         self.parse_picard()
@@ -50,13 +47,14 @@ class STARLogger(object):
 
 
 def star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn):
-    sample_outdir = Path(outdir, sample, '03.STAR')
+    sample_outdir = outdir / sample / '03.STAR'
     sample_outdir.mkdir(parents=True, exist_ok=True)
 
     # STAR
     out_prefix = sample_outdir / f'{sample}_'
     star_cmd = f'STAR --runThreadN {runthreadn} --genomeDir {genomedir} --readFilesIn {fq} --readFilesCommand {readfilescommand} --outFilterMultimapNmax 1 --outFileNamePrefix {out_prefix} --outSAMtype BAM SortedByCoordinate'
     logger.info('STAR start!')
+    logger.info(star_cmd)
     star_process = CommandWrapper(star_cmd, logger=logger)
     if star_process.returncode:
         logger.warning('STAR error!')
@@ -69,6 +67,7 @@ def star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthrea
     region_txt = sample_outdir / f'{sample}_region.log'
     picard_cmd = f'picard -Xmx4G -XX:ParallelGCThreads=4 CollectRnaSeqMetrics I={out_bam} O={region_txt} REF_FLAT={refflat} STRAND=NONE VALIDATION_STRINGENCY=SILENT'
     logger.info('stat mapping region start!')
+    logger.info(picard_cmd)
     picard_process = CommandWrapper(picard_cmd, logger=logger)
     if picard_process.returncode:
         logger.warning('stat mapping region error!')

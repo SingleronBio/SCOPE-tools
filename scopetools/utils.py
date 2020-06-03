@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import click
 
@@ -180,6 +181,20 @@ class cached_property(object):
         if obj is None:
             return self
         value = obj.__dict__[self.func.__name__] = self.func(obj)
+        return value
+
+
+def str2path(ctx, param, value):
+    """
+
+    :param ctx:
+    :param param:
+    :param value:
+    :return: Path
+    """
+    if value:
+        return Path(value)
+    else:
         return value
 
 
