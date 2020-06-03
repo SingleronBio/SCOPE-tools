@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import json
 import re
 import sys
-from pathlib import Path
 
 from scopetools.report import Reporter
 from scopetools.utils import getlogger, CommandWrapper
@@ -23,7 +21,6 @@ class CutadaptLogger(object):
         pattern_space = re.compile(r':\s*')
         match = pattern.search(self.stdout)
         if match:
-            self.stat_info['SampleName'] = self.sample
             for line in match.group().splitlines():
                 if line:
                     line = re.sub(pattern_space, ':', line)
@@ -38,7 +35,7 @@ def cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, ove
     adapter_para = ''
     for i, j in zip(['-a'] * len(adapter), adapter):
         adapter_para += f'{i} {j} '
-    sample_outdir = Path(outdir, sample, '02.cutadapt')
+    sample_outdir = outdir / sample / '02.cutadapt'
     sample_outdir.mkdir(parents=True, exist_ok=True)
 
     # cutadapt

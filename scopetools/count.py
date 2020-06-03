@@ -3,7 +3,6 @@
 import csv
 from collections import defaultdict
 from itertools import groupby
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -20,7 +19,15 @@ logger.setLevel(10)
 
 class CellGeneUmiSummary(object):
 
-    def __init__(self, file: Path, outdir: Path, sample: str, cell_num: int = 3000):
+    def __init__(self, file, outdir, sample, cell_num=3000):
+        """
+
+        :param file: Path
+        :param outdir: Path
+        :param sample: str
+        :param cell_num: int
+        """
+
         self.file = file
         self.sample = sample
         self.cell_num = cell_num
@@ -122,7 +129,6 @@ class CellGeneUmiSummary(object):
 
     def generate_count_summary(self):
         attrs = [
-            'SampleName',
             'Cells_number',
             'Saturation',
             'Mean_Reads',
@@ -133,7 +139,6 @@ class CellGeneUmiSummary(object):
             'mean_reads_per_cell',
         ]
         vals = [
-            f"{self.sample}",
             f"{int(self.cell_describe.loc['count', 'read_count']):d}",
             f"{self.saturations.loc[1, 'saturation']:.2%}",
             f"{int(self.cell_describe.loc['mean', 'read_count']):d}",
@@ -217,7 +222,7 @@ class Cell(object):
 
 
 def count(ctx, bam, sample, outdir, cells):
-    sample_outdir = Path(outdir, sample, '05.count')
+    sample_outdir = outdir / sample / '05.count'
     sample_outdir.mkdir(parents=True, exist_ok=True)
 
     # umi correction
