@@ -18,11 +18,17 @@ def cli():
     pass
 
 
+def sample_param(func):
+    func = click.option('--sample', type=click.STRING, required=True, help="sample name")(func)
+    func = click.option('--description', type=click.STRING, default='scRNA-Seq scope', show_default=True, help='description help')(func)
+    func = click.option('--version', type=click.STRING, default=__version__, show_default=True, help='version help')(func)
+    func = click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="output dir")(func)
+    return func
+
+
 def barcode_param(func):
     func = click.option('--fq1', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, required=True, help="read1 fq file")(func)
     func = click.option('--fq2', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, required=True, help="read2 fq file")(func)
-    func = click.option('--sample', type=click.STRING, required=True, help="sample name")(func)
-    func = click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="output dir")(func)
     func = click.option('--bctype', cls=MutuallyExclusiveOption, type=click.Choice(['SCOPEv2', 'SCOPEv1', '10X', 'Dropseq', 'inDrop', 'BD', 'other']), mutually_exclusive=['pattern', 'whitelist', 'linkers'], default=None, help='bctype help')(func)
     func = click.option('--pattern', cls=MutuallyExclusiveOption, type=BarcodeType(), mutually_exclusive=['bctype'], default=None, help="read1 pattern, C: cellbarcode, L: linker, U: UMI, T: polyT")(func)
     func = click.option('--whitelist', cls=MutuallyExclusiveOption, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, mutually_exclusive=['bctype'], default=None, help="cell barcode list")(func)
@@ -77,8 +83,22 @@ def cluster_param(func):
     return func
 
 
+@cli.command(name='sample', short_help="sample short help")
+@sample_param
+@click.option('--transcriptome', type=click.STRING, default='Unspecified', required=True, help="sample help")
+@click.pass_context
+def sample_pipe(ctx, sample, transcriptome, description, version, outdir, *args, **kwargs):
+    """
+    sample description
+    """
+    from scopetools.sample_description import sample_description
+    sample_description(ctx, sample, transcriptome, description, version, outdir)
+
+
 @cli.command(name='barcode', short_help="extract barcode and umi short help")
 @barcode_param
+@click.option('--sample', type=click.STRING, required=True, help="sample help")
+@click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="outdir help")
 @click.pass_context
 def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, lowqual, lownum, *args, **kwargs):
     """
@@ -180,6 +200,7 @@ def cluster_pipe(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes,
 
 
 @cli.command(name='run', help="run short help")
+@sample_param
 @barcode_param
 @cutadapt_param
 @star_param
@@ -187,11 +208,17 @@ def cluster_pipe(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes,
 @count_param
 @cluster_param
 @click.pass_context
-def run_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, lowqual, lownum, adapter, minimum_length, nextseq_trim, overlap, thread, refflat, genomedir, readfilescommand, runthreadn, annot, format, nthreads, type, cells, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs, *args, **kwargs):
+def run_pipe(ctx, description, version, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, lowqual, lownum, adapter, minimum_length, nextseq_trim, overlap, thread, refflat, genomedir, readfilescommand, runthreadn, annot, format, nthreads, type, cells, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs, *args, **kwargs):
     """
     run description
     """
+
     click.echo('run pipeline')
+
+    # sample_pipe
+    ctx.params['transcriptome'] = ctx.params['annot'].name.split('.')[0]
+    ctx.invoke(sample_pipe, **ctx.params)
+
     # barcode_pipe
     ctx.invoke(barcode_pipe, **ctx.params)
 
@@ -215,7 +242,7 @@ def run_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, 
     ctx.params['matrix'] = ctx.params['outdir'] / ctx.params['sample'] / '05.count' / f'{ctx.params["sample"]}_matrix.mtx'
     ctx.params['barcodes'] = ctx.params['outdir'] / ctx.params['sample'] / '05.count' / f'{ctx.params["sample"]}_barcodes.tsv'
     ctx.params['genes'] = ctx.params['outdir'] / ctx.params['sample'] / '05.count' / f'{ctx.params["sample"]}_genes.tsv'
-    ctx.invoke(count_pipe, **ctx.params)
+    ctx.invoke(cluster_pipe, **ctx.params)
 
 
 if __name__ == '__main__':
