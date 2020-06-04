@@ -123,7 +123,7 @@ def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, link
     else:
         raise click.BadParameter("Error: Illegal usage: [bctype] or [pattern whitelist linkers] must have one")
     from .barcode import barcode
-    barcode(ctx=ctx, fq1=fq1, fq2=fq2, sample=sample, outdir=outdir, pattern=pattern, whitelist=whitelist, linker=linker, lowqual=lowqual, lownum=lownum)
+    barcode(ctx=ctx, fq1=fq1, fq2=fq2, sample=sample, outdir=outdir, bctype=bctype, pattern=pattern, whitelist=whitelist, linker=linker, lowqual=lowqual, lownum=lownum)
 
 
 @cli.command(name='cutadapt', short_help="cutadapt short help")
@@ -224,6 +224,8 @@ def run_pipe(ctx, description, version, fq1, fq2, sample, outdir, bctype, patter
 
     # cutadapt_pipe
     ctx.params['fq'] = ctx.params['outdir'] / ctx.params['sample'] / '01.barcode' / f'{ctx.params["sample"]}_2.fq.gz'
+    if bctype == 'SCOPEv1':
+        ctx.params['adapter'] = ['A{20}']
     ctx.invoke(cutadapt_pipe, **ctx.params)
 
     # star_pipe
