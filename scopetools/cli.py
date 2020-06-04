@@ -3,7 +3,7 @@ from pathlib import Path
 
 import click
 
-from scopetools.utils import BarcodeType, AdapterType, MultipleOption, MutuallyExclusiveOption, str2path
+from .utils import BarcodeType, AdapterType, MultipleOption, MutuallyExclusiveOption, str2path
 
 __version__ = '0.2.1'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -91,7 +91,7 @@ def sample_pipe(ctx, sample, transcriptome, description, version, outdir, *args,
     """
     sample description
     """
-    from scopetools.sample_description import sample_description
+    from .sample_description import sample_description
     sample_description(ctx, sample, transcriptome, description, version, outdir)
 
 
@@ -122,7 +122,7 @@ def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, link
         # raise click.BadParameter("{} is not a valid adapter pattern".format(pattern))
     else:
         raise click.BadParameter("Error: Illegal usage: [bctype] or [pattern whitelist linkers] must have one")
-    from scopetools.barcode import barcode
+    from .barcode import barcode
     barcode(ctx=ctx, fq1=fq1, fq2=fq2, sample=sample, outdir=outdir, pattern=pattern, whitelist=whitelist, linker=linker, lowqual=lowqual, lownum=lownum)
 
 
@@ -136,7 +136,7 @@ def cutadapt_pipe(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim
     """
     cutadapt description
     """
-    from scopetools.cutadapt import cutadapt
+    from .cutadapt import cutadapt
     cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread)
 
 
@@ -150,7 +150,7 @@ def star_pipe(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, run
     """
     STAR description
     """
-    from scopetools.star import star
+    from .star import star
     star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn)
 
 
@@ -164,7 +164,7 @@ def featurecounts_pipe(ctx, input, annot, sample, outdir, format, nthreads, type
     """
     featureCounts description
     """
-    from scopetools.featurecounts import featurecounts
+    from .featurecounts import featurecounts
     featurecounts(ctx, input, annot, sample, outdir, format, nthreads, type)
 
 
@@ -178,7 +178,7 @@ def count_pipe(ctx, bam, sample, outdir, cells, *args, **kwargs):
     """
     count description
     """
-    from scopetools.count import count
+    from .count import count
     count(ctx, bam, sample, outdir, cells)
 
 
@@ -195,7 +195,7 @@ def cluster_pipe(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes,
     cluster description
     """
     click.echo('cluster pipeline')
-    from scopetools.cluster import cluster
+    from .cluster import cluster
     cluster(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs)
 
 

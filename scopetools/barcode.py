@@ -10,8 +10,9 @@ import numpy as np
 import pandas as pd
 import pysam
 
-from scopetools.report import Reporter
-from scopetools.utils import getlogger, CommandWrapper, cached_property
+from .protocol import BarcodePattern, MisSeq
+from .report import Reporter
+from .utils import getlogger, CommandWrapper
 
 logger = getlogger(__name__)
 logger.setLevel(10)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from scopetools.report import Reporter
-from scopetools.utils import getlogger
+from .report import Reporter
+from .utils import getlogger
 
 logger = getlogger(__name__)
 logger.setLevel(10)
