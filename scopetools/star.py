@@ -42,7 +42,7 @@ class STARLogger(object):
                 picard_dict = dict(zip(attrs, vals))
                 self.stat_info['Exonic_Regions'] = f'{int(picard_dict["CODING_BASES"]) + int(picard_dict["UTR_BASES"]):d} ({float(picard_dict["PCT_CODING_BASES"]) + float(picard_dict["PCT_UTR_BASES"]):.2%})'
                 self.stat_info['Intronic_Regions'] = f'{int(picard_dict["INTRONIC_BASES"]):d} ({float(picard_dict["PCT_INTRONIC_BASES"]):.2%})'
-                self.stat_info['Intergenic_Regions'] = f'{int(picard_dict["INTERGENIC_BASES"]):d} ({float(picard_dict["PCT_INTRONIC_BASES"]):.2%})'
+                self.stat_info['Intergenic_Regions'] = f'{int(picard_dict["INTERGENIC_BASES"]):d} ({float(picard_dict["PCT_INTERGENIC_BASES"]):.2%})'
                 self.plot = {
                     'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
                     'region_values': [int(picard_dict["CODING_BASES"]), int(picard_dict["INTRONIC_BASES"]), int(picard_dict["INTERGENIC_BASES"])]
