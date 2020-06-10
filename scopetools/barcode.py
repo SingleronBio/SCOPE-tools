@@ -315,8 +315,8 @@ class SCOPEv2(Sequence):
 
 def barcode(
         ctx,
-        fq1=None,
-        fq2=None,
+        fq1s=None,
+        fq2s=None,
         sample=None,
         outdir=None,
         pattern=None,
@@ -328,15 +328,15 @@ def barcode(
     """
 
     :param ctx:
-    :param fq1:
-    :param fq2:
+    :param fq1s:
+    :param fq2s:
     :param sample:
     :param outdir:
     :param pattern:
-    :param whitelist:
-    :param linker:
     :param lowqual:
     :param lownum:
+    :param whitelist:
+    :param linker:
     :return:
     """
     logger.info('Extract barcode start!')
@@ -371,31 +371,33 @@ def barcode(
     sample_outdir.mkdir(parents=True, exist_ok=True)
     clean_fastq = sample_outdir / f'{sample}_2.fq.gz'
 
-    with pysam.FastxFile(fq1) as f1, pysam.FastxFile(fq2) as f2, gzip.open(clean_fastq, mode='wt', encoding='utf-8') as f:
-        for seq1, seq2 in zip(f1, f2):
-            if seq1.name == seq2.name:
-                SEQ_INFO.total_num += 1
-            else:
-                logger.warning(f"{fq1} and {fq2} are not compatible")
-                sys.exit(1)
+    with gzip.open(clean_fastq, mode='wt', encoding='utf-8') as f:
+        for fq1, fq2 in zip(fq1s, fq2s):
+            with pysam.FastxFile(fq1) as f1, pysam.FastxFile(fq2) as f2:
+                for seq1, seq2 in zip(f1, f2):
+                    if seq1.name == seq2.name:
+                        SEQ_INFO.total_num += 1
+                    else:
+                        logger.warning(f"{fq1} and {fq2} are not compatible")
+                        sys.exit(1)
 
-            sequence = SCOPEv2(
-                seq1=seq1,
-                seq2=seq2,
-                lownum=lownum,
-                lowqual=lowqual,
-                barcode_pattern=barcode_pattern,
-                linkers_dict=linkers_dict,
-                cell_dict=cell_dict
-            )
-            if sequence.rna_sequence:
-                f.write(f'{sequence.rna_sequence}\n')
+                    sequence = SCOPEv2(
+                        seq1=seq1,
+                        seq2=seq2,
+                        lownum=lownum,
+                        lowqual=lowqual,
+                        barcode_pattern=barcode_pattern,
+                        linkers_dict=linkers_dict,
+                        cell_dict=cell_dict
+                    )
+                    if sequence.rna_sequence:
+                        f.write(f'{sequence.rna_sequence}\n')
 
-                for position, quality in enumerate(sequence.cell_quality + sequence.umi_quality):
-                    cell_umi_quality_array[position, quality] += 1
+                        for position, quality in enumerate(sequence.cell_quality + sequence.umi_quality):
+                            cell_umi_quality_array[position, quality] += 1
 
-                for position, base in enumerate(''.join(sequence.cell) + sequence.umi):
-                    cell_umi_base_array[position, base_dict[base]] += 1
+                        for position, base in enumerate(''.join(sequence.cell) + sequence.umi):
+                            cell_umi_base_array[position, base_dict[base]] += 1
 
     # stat
     cell_q30 = cell_umi_quality_array[:cell_len, 30:].sum() / cell_umi_quality_array[:cell_len].sum()

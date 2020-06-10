@@ -27,8 +27,8 @@ def sample_param(func):
 
 
 def barcode_param(func):
-    func = click.option('--fq1', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, required=True, help="read1 fq file")(func)
-    func = click.option('--fq2', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, required=True, help="read2 fq file")(func)
+    func = click.option('--fq1', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), multiple=True, callback=str2path, required=True, help="read1 fq file")(func)
+    func = click.option('--fq2', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), multiple=True, callback=str2path, required=True, help="read2 fq file")(func)
     func = click.option('--bctype', cls=MutuallyExclusiveOption, type=click.Choice(['SCOPEv2', 'SCOPEv1', '10X', 'Dropseq', 'inDrop', 'BD', 'other']), mutually_exclusive=['pattern', 'whitelist', 'linkers'], default=None, help='bctype help')(func)
     func = click.option('--pattern', cls=MutuallyExclusiveOption, type=BarcodeType(), mutually_exclusive=['bctype'], default=None, help="read1 pattern, C: cellbarcode, L: linker, U: UMI, T: polyT")(func)
     func = click.option('--whitelist', cls=MutuallyExclusiveOption, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, mutually_exclusive=['bctype'], default=None, help="cell barcode list")(func)
@@ -123,7 +123,7 @@ def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, link
     else:
         raise click.BadParameter("Error: Illegal usage: [bctype] or [pattern whitelist linkers] must have one")
     from scopetools.barcode import barcode
-    barcode(ctx=ctx, fq1=fq1, fq2=fq2, sample=sample, outdir=outdir, pattern=pattern, whitelist=whitelist, linker=linker, lowqual=lowqual, lownum=lownum)
+    barcode(ctx=ctx, fq1s=fq1, fq2s=fq2, sample=sample, outdir=outdir, pattern=pattern, whitelist=whitelist, linker=linker, lowqual=lowqual, lownum=lownum)
 
 
 @cli.command(name='cutadapt', short_help="cutadapt short help")
