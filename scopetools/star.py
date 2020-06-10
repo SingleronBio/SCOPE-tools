@@ -2,8 +2,8 @@
 import re
 import sys
 
-from scopetools.report import Reporter
-from scopetools.utils import getlogger, CommandWrapper
+from .report import Reporter
+from .utils import getlogger, CommandWrapper
 
 logger = getlogger(__name__)
 logger.setLevel(10)
