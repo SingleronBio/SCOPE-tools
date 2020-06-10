@@ -4,8 +4,8 @@ import os
 import pandas as pd
 import scanpy as sc
 
-from scopetools.report import Reporter
-from scopetools.utils import getlogger
+from .report import Reporter
+from .utils import getlogger
 
 FILETYPE = ['png', 'pdf']
 CLUSTER_ALGORITHM = ['leiden', 'louvain']

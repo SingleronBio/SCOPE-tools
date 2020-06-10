@@ -10,8 +10,8 @@ import pysam
 from scipy.io import mmwrite
 from scipy.sparse import coo_matrix
 
-from scopetools.report import Reporter
-from scopetools.utils import getlogger, cached_property
+from .report import Reporter
+from .utils import getlogger, cached_property
 
 logger = getlogger(__name__)
 logger.setLevel(10)

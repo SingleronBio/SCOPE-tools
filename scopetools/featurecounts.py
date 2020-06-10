@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pysam
 
-from scopetools.report import Reporter
-from scopetools.utils import getlogger, CommandWrapper
+from .report import Reporter
+from .utils import getlogger, CommandWrapper
 
 logger = getlogger(__name__)
 logger.setLevel(10)
