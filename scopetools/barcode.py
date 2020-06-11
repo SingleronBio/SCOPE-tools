@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import gzip
 import sys
 
+import dnaio
 import numpy as np
 import pandas as pd
-import pysam
+from xopen import xopen
 
 from .protocol import BarcodePattern, MisSeq
 from .report import Reporter
@@ -56,18 +56,18 @@ def barcode(
 
     whitelist_list = []
     if whitelist:
-        with open(whitelist, encoding='utf-8', mode='r')as f:
-            for line in f.readlines():
+        with xopen(whitelist, mode='rt') as f:
+            for line in f:
                 whitelist_list.append(line.strip())
         cell_dict = MisSeq(whitelist_list)
     else:
         cell_dict = None
 
     if linker:
-        with open(linker, encoding='utf-8', mode='r')as f:
+        with xopen(linker, mode='rt')as f:
             length = [end - start for start, end in zip(barcode_pattern['L'].start, barcode_pattern['L'].end)]
             linker_list = [[] for i in range(len(length))]
-            for line in f.readlines():
+            for line in f:
                 linkers = line.strip()
                 for nth, val in enumerate(length):
                     linker_list[nth].append(linkers[:val])
@@ -87,9 +87,9 @@ def barcode(
     else:
         from .protocol import Sequence
 
-    with gzip.open(clean_fastq, mode='wt', encoding='utf-8') as f:
+    with xopen(clean_fastq, mode='wt') as f:
         for fq1, fq2 in zip(fq1s, fq2s):
-            with pysam.FastxFile(fq1) as f1, pysam.FastxFile(fq2) as f2:
+            with dnaio.open(fq1) as f1, dnaio.open(fq2) as f2:
                 for seq1, seq2 in zip(f1, f2):
                     if seq1.name == seq2.name:
                         Sequence.seq_info['total_num'] += 1
