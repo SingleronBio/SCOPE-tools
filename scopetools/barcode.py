@@ -84,6 +84,8 @@ def barcode(
         from .protocol import SCOPEv2 as Sequence
     elif bctype == 'SCOPEv1':
         from .protocol import SCOPEv1 as Sequence
+    elif bctype == 'TENXv3':
+        from .protocol import TENXv3 as Sequence
     else:
         from .protocol import Sequence
 

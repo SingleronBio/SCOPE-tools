@@ -390,3 +390,140 @@ class SCOPEv2(Sequence):
         rna_sequence.quality = self.seq2.quality
         self.add_clean_num()
         return rna_sequence
+
+
+class TENXv3(Sequence):
+    seq_info = {
+        'total_num': 0,
+        'clean_num': 0,
+        'no_polyt_num': 0,
+        'lowqual_num': 0,
+        'no_linker_num': 0,
+        'no_cell_num': 0,
+        'cell_corrected_num': 0,
+        'cell_dict': defaultdict(int)
+    }
+
+    @classmethod
+    def add_clean_num(cls, num: int = 1):
+        cls.seq_info['clean_num'] += num
+
+    @classmethod
+    def add_no_polyt_num(cls, num: int = 1):
+        cls.seq_info['no_polyt_num'] += num
+
+    @classmethod
+    def add_lowqual_num(cls, num: int = 1):
+        cls.seq_info['lowqual_num'] += num
+
+    @classmethod
+    def add_no_cell_num(cls, num: int = 1):
+        cls.seq_info['no_cell_num'] += num
+
+    @classmethod
+    def add_cell_corrected_num(cls, num: int = 1):
+        cls.seq_info['cell_corrected_num'] += num
+
+    @classmethod
+    def add_cell_dict(cls, cell, num: int = 1):
+        cls.seq_info['cell_dict'][cell] += num
+
+    @classmethod
+    def stat_info(cls):
+        return {
+            'Number of Reads': cls.seq_info['total_num'],
+            'Valid Reads': f'{cls.seq_info["clean_num"]} ({cls.seq_info["clean_num"] / cls.seq_info["total_num"]:.2%})',
+            'Valid Barcodes': len(cls.seq_info['cell_dict']),
+            'Reads without polyT': f'{cls.seq_info["no_polyt_num"]} ({cls.seq_info["no_polyt_num"] / cls.seq_info["total_num"]:.2%})',
+            'Reads with lowQual': f'{cls.seq_info["lowqual_num"]} ({cls.seq_info["lowqual_num"] / cls.seq_info["total_num"]:.2%})',
+            'Reads without Barcode': f'{cls.seq_info["no_cell_num"]} ({cls.seq_info["no_cell_num"] / cls.seq_info["total_num"]:.2%})',
+            'Reads with corrected Barcode': f'{cls.seq_info["cell_corrected_num"]} ({cls.seq_info["cell_corrected_num"] / cls.seq_info["total_num"]:.2%})',
+        }
+
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super(TENXv3, self).__init__(*args, **kwargs)
+        self._cell = ''
+        self.rna_sequence = self.correct_seq()
+
+    @cached_property
+    def linkers(self):
+        linkers = []
+        for start, end in zip(self.barcode_pattern['L'].start, self.barcode_pattern['L'].end):
+            linkers.append(self.seq1.sequence[start:end])
+        return linkers
+
+    @cached_property
+    def corrected_cell(self):
+        return self._cell
+
+    @cached_property
+    def corrected_num(self):
+        corrected_num = 0
+        for cell in self.cell:
+            if cell in self.cell_dict:
+                self._cell += self.cell_dict[cell][0]
+                if self.cell_dict[cell][1] == -1:
+                    corrected_num += 0
+                else:
+                    corrected_num += 1
+                    logger.warning(f"cell barcode {cell} is corrected as {self.cell_dict[cell][0]}")
+            else:
+                corrected_num += -100
+        return corrected_num
+
+    @cached_property
+    def is_no_cell(self):
+        if self.corrected_num < -10 or self.corrected_num > 1:
+            return True
+        else:
+            return False
+
+    @cached_property
+    def is_low_quality(self):
+        return True if sum(q < self.lowqual for q in self.cell_quality + self.umi_quality) > self.lownum else False
+
+    @cached_property
+    def is_no_polyt(self, strict_t: int = 0, min_t: int = 10):
+        """
+
+        :param strict_t:
+        :param min_t:
+        :return:
+        """
+        polyt = ''.join(self.polyt)
+        return any(
+            [
+                polyt[:strict_t].count('T') < strict_t,
+                polyt.count('T') < min_t
+            ]
+        )
+
+    def correct_seq(self):
+        if self.is_no_polyt:
+            self.add_no_polyt_num()
+            return None
+
+        if self.is_low_quality:
+            self.add_lowqual_num()
+            return None
+
+        if self.is_no_cell:
+            self.add_no_cell_num()
+            return None
+
+        if self.corrected_num > 0:
+            self.add_cell_corrected_num()
+
+        self.add_cell_dict(self.corrected_cell)
+
+        # new readID: @barcode_umi_old readID
+        rna_sequence = OneSequence()
+        rna_sequence.name = f'{self.corrected_cell}_{self.umi}_{self.seq2.name}'
+        rna_sequence.sequence = self.seq2.sequence
+        rna_sequence.quality = self.seq2.qualities
+        self.add_clean_num()
+        return rna_sequence
