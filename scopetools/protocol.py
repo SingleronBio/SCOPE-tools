@@ -44,6 +44,18 @@ class BarcodeDict(dict):
     end: List[int] = field(default_factory=list)
 
 
+@dataclass()
+class OneSequence(object):
+    name: str = ''
+    sequence: str = ''
+    identifier: str = '+'
+    quality: str = ''
+
+    @cached_property
+    def rna_sequence(self):
+        return f'{self.name}\n{self.sequence}\n{self.identifier}\n{self.quality}'
+
+
 class MisSeq(object):
 
     def __init__(self, seqs):
