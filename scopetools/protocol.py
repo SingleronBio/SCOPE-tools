@@ -242,11 +242,11 @@ class SCOPEv1(Sequence):
 
         # new readID: @barcode_umi_old readID
         rna_sequence = OneSequence()
-        rna_sequence.name = f'{self.corrected_cell}_{self.umi}_{self.seq2.name}'
+        rna_sequence.name = f'@{self.corrected_cell}_{self.umi}_{self.seq2.name}'
         rna_sequence.sequence = self.seq2.sequence
         rna_sequence.quality = self.seq2.qualities
         self.add_clean_num()
-        return rna_sequence
+        return rna_sequence.rna_sequence
 
 
 class SCOPEv2(Sequence):
@@ -396,8 +396,8 @@ class SCOPEv2(Sequence):
 
         # new readID: @barcode_umi_old readID
         rna_sequence = OneSequence()
-        rna_sequence.name = f'{self.corrected_cell}_{self.umi}_{self.seq2.name}'
+        rna_sequence.name = f'@{self.corrected_cell}_{self.umi}_{self.seq2.name}'
         rna_sequence.sequence = self.seq2.sequence
         rna_sequence.quality = self.seq2.qualities
         self.add_clean_num()
-        return rna_sequence
+        return rna_sequence.rna_sequence

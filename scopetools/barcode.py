@@ -91,12 +91,7 @@ def barcode(
         for fq1, fq2 in zip(fq1s, fq2s):
             with dnaio.open(fq1) as f1, dnaio.open(fq2) as f2:
                 for seq1, seq2 in zip(f1, f2):
-                    if seq1.name == seq2.name:
-                        Sequence.seq_info['total_num'] += 1
-                    else:
-                        logger.warning(f"{fq1} and {fq2} are not compatible")
-                        sys.exit(1)
-
+                    Sequence.seq_info['total_num'] += 1
                     sequence = Sequence(
                         seq1=seq1,
                         seq2=seq2,
