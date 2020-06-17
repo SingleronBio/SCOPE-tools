@@ -3,9 +3,9 @@ from pathlib import Path
 
 import click
 
+from . import __version__
 from .utils import BarcodeType, AdapterType, MultipleOption, MutuallyExclusiveOption, str2path
 
-__version__ = '0.2.1'
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 

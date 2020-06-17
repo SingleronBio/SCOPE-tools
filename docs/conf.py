@@ -14,7 +14,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-
+from ..scopetools import _version
 # -- Project information -----------------------------------------------------
 
 project = 'SCOPE-tools'
@@ -22,8 +22,8 @@ copyright = '2020, 新格元生物科技有限公司'
 author = '新格元生物科技有限公司'
 
 # The full version, including alpha/beta/rc tags
-version = '0.1.1'
-release = '0.1.0'
+version = _version
+release = _version
 
 # -- General configuration ---------------------------------------------------
 
