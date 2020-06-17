@@ -3,7 +3,7 @@
 import csv
 from collections import defaultdict
 from itertools import groupby
-
+from ._count import umi_reads_downsample as downsample
 import matplotlib.pyplot as plt
 import pandas as pd
 import pysam
@@ -34,11 +34,10 @@ class CellGeneUmiSummary(object):
 
         self.seq_df = pd.read_csv(self.file, index_col=[0])
         self.cell_df = None
-        self.all_seq_df = None
         self.nth = None
         self.threshold = None
         self.valid_cell = None
-        self.saturations = pd.DataFrame(columns=['percent', 'median_gene_num', 'saturation']).set_index('percent')
+        self.saturations = downsample(self.seq_df)
         self.count_info = {}
         self.umi_info = {}
 
@@ -51,7 +50,6 @@ class CellGeneUmiSummary(object):
         self.call_cells()
         self.plot_umi_cell()
         self.generate_matrix()
-        self.downsample()
         self.generate_count_summary()
         self.generate_umi_summary()
 
@@ -115,17 +113,6 @@ class CellGeneUmiSummary(object):
         self.gene_cell_matrix.columns.to_series().to_csv(self.matrix_cellbarcode_file, index=False, header=False)
         self.gene_cell_matrix.index.to_series().to_csv(self.matrix_gene_file, index=False, header=False)
         mmwrite(str(self.matrix_file), coo_matrix(self.gene_cell_matrix))
-
-    def downsample(self):
-        self.all_seq_df = self.seq_df.reset_index().set_index(['Barcode', 'geneID', 'UMI']).index.repeat(self.seq_df['count']).to_frame().set_index(['Barcode'])
-        for i in range(1, 11):
-            sample_df = self.all_seq_df.sample(frac=i / 10)
-            sample_df = sample_df.loc[sample_df.index.isin(self.valid_cell), :]
-            total = sample_df['UMI'].count()
-            gene_num_median = sample_df.pivot_table(index='Barcode', aggfunc={'geneID': 'nunique'})['geneID'].median()
-            sample_df = sample_df.pivot_table(index=['Barcode', 'geneID', 'UMI'], aggfunc={'UMI': 'count'})
-            saturation = 1 - sample_df.loc[sample_df['UMI'] < 2, :].shape[0] / total
-            self.saturations.loc[i / 10, :] = [gene_num_median, saturation]
 
     def generate_count_summary(self):
         attrs = [

@@ -4,7 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple
 
-import pysam
+import dnaio
 
 from .utils import cached_property, getlogger
 
@@ -42,6 +42,18 @@ class BarcodePattern(object):
 class BarcodeDict(dict):
     start: List[int] = field(default_factory=list)
     end: List[int] = field(default_factory=list)
+
+
+@dataclass()
+class OneSequence(object):
+    name: str = ''
+    sequence: str = ''
+    identifier: str = '+'
+    quality: str = ''
+
+    @cached_property
+    def rna_sequence(self):
+        return f'{self.name}\n{self.sequence}\n{self.identifier}\n{self.quality}'
 
 
 class MisSeq(object):
@@ -83,8 +95,8 @@ class Sequence(object):
 
     def __init__(
             self,
-            seq1: pysam.FastxRecord,
-            seq2: pysam.FastxRecord,
+            seq1: dnaio.Sequence,
+            seq2: dnaio.Sequence,
             barcode_pattern: BarcodePattern,
             lowqual: int,
             lownum: int,
@@ -118,7 +130,7 @@ class Sequence(object):
     def cell_quality(self):
         cell_quality = []
         for start, end in zip(self.barcode_pattern['C'].start, self.barcode_pattern['C'].end):
-            cell_quality[-1:-1] = [ord(q) - 33 for q in self.seq1.quality[start:end]]
+            cell_quality[-1:-1] = [ord(q) - 33 for q in self.seq1.qualities[start:end]]
         return cell_quality
 
     @cached_property
@@ -132,7 +144,7 @@ class Sequence(object):
     def umi_quality(self):
         umi_quality = []
         for start, end in zip(self.barcode_pattern['U'].start, self.barcode_pattern['U'].end):
-            umi_quality[-1:-1] = [ord(q) - 33 for q in self.seq1.quality[start:end]]
+            umi_quality[-1:-1] = [ord(q) - 33 for q in self.seq1.qualities[start:end]]
         return umi_quality
 
 
@@ -229,12 +241,12 @@ class SCOPEv1(Sequence):
         self.add_cell_dict(self.corrected_cell)
 
         # new readID: @barcode_umi_old readID
-        rna_sequence = pysam.pysam.FastxRecord()
-        rna_sequence.name = f'{self.corrected_cell}_{self.umi}_{self.seq2.name}'
+        rna_sequence = OneSequence()
+        rna_sequence.name = f'@{self.corrected_cell}_{self.umi}_{self.seq2.name}'
         rna_sequence.sequence = self.seq2.sequence
-        rna_sequence.quality = self.seq2.quality
+        rna_sequence.quality = self.seq2.qualities
         self.add_clean_num()
-        return rna_sequence
+        return rna_sequence.rna_sequence
 
 
 class SCOPEv2(Sequence):
@@ -310,7 +322,6 @@ class SCOPEv2(Sequence):
     def corrected_cell(self):
         return self._cell
 
-
     @cached_property
     def corrected_num(self):
         corrected_num = 0
@@ -384,9 +395,9 @@ class SCOPEv2(Sequence):
         self.add_cell_dict(self.corrected_cell)
 
         # new readID: @barcode_umi_old readID
-        rna_sequence = pysam.pysam.FastxRecord()
-        rna_sequence.name = f'{self.corrected_cell}_{self.umi}_{self.seq2.name}'
+        rna_sequence = OneSequence()
+        rna_sequence.name = f'@{self.corrected_cell}_{self.umi}_{self.seq2.name}'
         rna_sequence.sequence = self.seq2.sequence
-        rna_sequence.quality = self.seq2.quality
+        rna_sequence.quality = self.seq2.qualities
         self.add_clean_num()
-        return rna_sequence
+        return rna_sequence.rna_sequence
