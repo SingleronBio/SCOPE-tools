@@ -3,16 +3,15 @@
 import csv
 from collections import defaultdict
 from itertools import groupby
-from pathlib import Path
-
+from ._count import umi_reads_downsample as downsample
 import matplotlib.pyplot as plt
 import pandas as pd
 import pysam
 from scipy.io import mmwrite
 from scipy.sparse import coo_matrix
 
-from scopetools.report import Reporter
-from scopetools.utils import getlogger, cached_property
+from .report import Reporter
+from .utils import getlogger, cached_property
 
 logger = getlogger(__name__)
 logger.setLevel(10)
@@ -20,18 +19,25 @@ logger.setLevel(10)
 
 class CellGeneUmiSummary(object):
 
-    def __init__(self, file: Path, outdir: Path, sample: str, cell_num: int = 3000):
+    def __init__(self, file, outdir, sample, cell_num=3000):
+        """
+
+        :param file: Path
+        :param outdir: Path
+        :param sample: str
+        :param cell_num: int
+        """
+
         self.file = file
         self.sample = sample
         self.cell_num = cell_num
 
         self.seq_df = pd.read_csv(self.file, index_col=[0])
         self.cell_df = None
-        self.all_seq_df = None
         self.nth = None
         self.threshold = None
         self.valid_cell = None
-        self.saturations = pd.DataFrame(columns=['percent', 'median_gene_num', 'saturation']).set_index('percent')
+        self.saturations = downsample(self.seq_df)
         self.count_info = {}
         self.umi_info = {}
 
@@ -44,7 +50,6 @@ class CellGeneUmiSummary(object):
         self.call_cells()
         self.plot_umi_cell()
         self.generate_matrix()
-        self.downsample()
         self.generate_count_summary()
         self.generate_umi_summary()
 
@@ -109,20 +114,8 @@ class CellGeneUmiSummary(object):
         self.gene_cell_matrix.index.to_series().to_csv(self.matrix_gene_file, index=False, header=False)
         mmwrite(str(self.matrix_file), coo_matrix(self.gene_cell_matrix))
 
-    def downsample(self):
-        self.all_seq_df = self.seq_df.reset_index().set_index(['Barcode', 'geneID', 'UMI']).index.repeat(self.seq_df['count']).to_frame().set_index(['Barcode'])
-        for i in range(1, 11):
-            sample_df = self.all_seq_df.sample(frac=i / 10)
-            sample_df = sample_df.loc[sample_df.index.isin(self.valid_cell), :]
-            total = sample_df['UMI'].count()
-            gene_num_median = sample_df.pivot_table(index='Barcode', aggfunc={'geneID': 'nunique'})['geneID'].median()
-            sample_df = sample_df.pivot_table(index=['Barcode', 'geneID', 'UMI'], aggfunc={'UMI': 'count'})
-            saturation = 1 - sample_df.loc[sample_df['UMI'] < 2, :].shape[0] / total
-            self.saturations.loc[i / 10, :] = [gene_num_median, saturation]
-
     def generate_count_summary(self):
         attrs = [
-            'SampleName',
             'Cells_number',
             'Saturation',
             'Mean_Reads',
@@ -133,7 +126,6 @@ class CellGeneUmiSummary(object):
             'mean_reads_per_cell',
         ]
         vals = [
-            f"{self.sample}",
             f"{int(self.cell_describe.loc['count', 'read_count']):d}",
             f"{self.saturations.loc[1, 'saturation']:.2%}",
             f"{int(self.cell_describe.loc['mean', 'read_count']):d}",
@@ -217,7 +209,7 @@ class Cell(object):
 
 
 def count(ctx, bam, sample, outdir, cells):
-    sample_outdir = Path(outdir, sample, '05.count')
+    sample_outdir = outdir / sample / '05.count'
     sample_outdir.mkdir(parents=True, exist_ok=True)
 
     # umi correction

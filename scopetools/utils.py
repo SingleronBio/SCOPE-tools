@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import click
 
@@ -36,16 +37,13 @@ class AdapterType(click.ParamType):
         """
         poly_pattern = re.compile(r'([ATCGatcg]{\d+})+')
         p5_pattern = re.compile(r'(^[ATCGatcg]+)$')
-        adapters = []
-        for i in value:
-            adapter = i.split('=')[-1]
-            if re.fullmatch(poly_pattern, adapter) or re.fullmatch(p5_pattern, adapter):
-                adapters.append(adapter)
-            else:
-                click.echo('fail')
-                raise click.BadParameter("{} is not a valid adapter pattern".format(adapter))
-                # self.fail("{} is not a valid adapter pattern".format(adapter), param, ctx)
-        return adapters
+        adapter = value.split('=')[-1]
+        if re.fullmatch(poly_pattern, adapter) or re.fullmatch(p5_pattern, adapter):
+            return adapter
+        else:
+            click.echo('fail')
+            raise click.BadParameter("{} is not a valid adapter pattern".format(adapter))
+            # self.fail("{} is not a valid adapter pattern".format(adapter), param, ctx)
 
 
 class MultipleOption(click.Option):
@@ -180,6 +178,22 @@ class cached_property(object):
         if obj is None:
             return self
         value = obj.__dict__[self.func.__name__] = self.func(obj)
+        return value
+
+
+def str2path(ctx, param, value):
+    """
+
+    :param ctx:
+    :param param:
+    :param value:
+    :return: Path
+    """
+    if isinstance(value, str):
+        return Path(value)
+    elif isinstance(value, tuple):
+        return (Path(i) for i in value)
+    else:
         return value
 
 

@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pysam
 
-from scopetools.report import Reporter
-from scopetools.utils import getlogger, CommandWrapper
+from .report import Reporter
+from .utils import getlogger, CommandWrapper
 
 logger = getlogger(__name__)
 logger.setLevel(10)
@@ -47,9 +47,7 @@ class GeneName(object):
 class FeatureCountsLogger(object):
     def __init__(self, log, sample):
         self.log = log
-        self.stat_info = {
-            'SampleName': f'{sample}'
-        }
+        self.stat_info = {}
         self.parse_log()
 
     def parse_log(self):
@@ -88,13 +86,13 @@ class Alignment(object):
         self.alignment.set_tag('XT', self.__gene_name)
 
 
-def featurecounts(ctx, input, annot, sample, outdir, format, nthreads):
-    sample_outdir = Path(outdir, sample, '04.featureCounts')
+def featurecounts(ctx, input, annot, sample, outdir, format, nthreads, type):
+    sample_outdir = outdir / sample / '04.featureCounts'
     sample_outdir.mkdir(parents=True, exist_ok=True)
 
     # featureCounts
     logger.info('featureCounts start!')
-    featurecounts_cmd = f'featureCounts -a {annot} -o {sample_outdir / sample} -R {format} -T {nthreads} {input}'
+    featurecounts_cmd = f'featureCounts -a {annot} -o {sample_outdir / sample} -t {type} -R {format} -T {nthreads} {input}'
     featurecounts_process = CommandWrapper(command=featurecounts_cmd, logger=logger)
     if featurecounts_process.returncode:
         logger.warning('featureCounts error!')
@@ -103,7 +101,7 @@ def featurecounts(ctx, input, annot, sample, outdir, format, nthreads):
         logger.info('featureCounts done!')
 
     # samtools sort
-    samtools_cmd = f'samtools sort -n -@ {nthreads} -o {sample_outdir / sample}_name_sorted.bam {sample_outdir / Path(input).name}.featureCounts.bam'
+    samtools_cmd = f'samtools sort -n -@ {nthreads} -o {sample_outdir / sample}_name_sorted.bam {sample_outdir / input.name}.featureCounts.bam'
     samtools_process = CommandWrapper(samtools_cmd, logger=logger)
     if samtools_process.returncode:
         logger.warning('samtools error!')

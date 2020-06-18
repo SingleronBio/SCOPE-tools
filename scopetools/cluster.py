@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
-from pathlib import Path
 
 import pandas as pd
 import scanpy as sc
 
-from scopetools.report import Reporter
-from scopetools.utils import getlogger
+from .report import Reporter
+from .utils import getlogger
 
 FILETYPE = ['png', 'pdf']
 CLUSTER_ALGORITHM = ['leiden', 'louvain']
@@ -18,7 +17,7 @@ logger.setLevel(10)
 
 
 def cluster(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs):
-    sample_outdir = Path(outdir, sample, '06.cluster')
+    sample_outdir = outdir / sample / '06.cluster'
     sample_outdir.mkdir(parents=True, exist_ok=True)
     os.chdir(sample_outdir)
 
@@ -74,7 +73,7 @@ def cluster(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_
 
     stat_info = {}
     img = {}
-    pngs = Path(sample_outdir / 'figures').rglob('*.png')
+    pngs = (sample_outdir / 'figures').rglob('*.png')
     for png in pngs:
         img[png.name] = png.resolve()
 
