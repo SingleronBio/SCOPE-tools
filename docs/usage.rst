@@ -45,7 +45,7 @@
 
 #. 使用说明
 
-    SCOPE-tools包含7个子命令, 分别是barcode, cutadapt, STAR, featureCounts, count, cluster和run.
+    SCOPE-tools包含7个子命令, 分别是sample, barcode, cutadapt, STAR, featureCounts, count, cluster和run.
 
     .. code-block:: bash
 
@@ -67,6 +67,26 @@
           cutadapt       cutadapt short help
           featureCounts  featureCounts short help
           run            run short help
+          sample         sample short help
+
+    * sample
+
+        设置报告中的样本信息.
+
+        * 示例
+            .. code-block:: bash
+
+                scope sample \
+                    --transcriptome Homo_sapiens \
+                    --sample samplename \
+                    --outdir ./
+
+        * 参数说明
+            * --outdir: 输出路径
+            * --version: 软件版本
+            * --description: 功能描述信息
+            * --sample: 样本名称
+            * --transcriptome: 转录组名称
 
     * barcode
 
@@ -219,11 +239,26 @@
 
     * cluster
 
-        描述
+        调用 scanpy_ 对表达矩阵进行分析, 得到细胞QC和初步的聚类图
+
+            .. _scanpy: https://scanpy.readthedocs.io/
 
         * 示例
+            .. code-block:: bash
+
+                scope cluster \
+                    --matrix ./samplename/05.count/samplename_matrix.mtx \
+                    --barcodes ./samplename/05.count/samplename_barcodes.tsv
+                    --genes ./samplename/05.count/samplename_genes.tsv \
+                    --outdir ./
+                    --sample samplename
 
         * 参数说明
+            * --outdir: 输出路径
+            * --sample: 样本名称
+            * --matrix: 单细胞基因表达稀疏矩阵路径
+            * --barcodes: 表达稀疏矩阵路径
+            * --genes:
 
     * run
 
