@@ -1,4 +1,4 @@
-|Stars| |condaDownloads| |Version| |Docs| |Status| |Install|
+|Stars| |condaDownloads| |Version| |Docs| |Status| |Install| |License|
 
 .. |Stars| image:: https://img.shields.io/github/stars/SingleronBio/SCOPE-tools?logo=GitHub&color=yellow
    :target: https://github.com/SingleronBio/SCOPE-tools/stargazers
@@ -12,7 +12,8 @@
    :target: https://anaconda.org/singleronbio/scope-tools
 .. |Install| image:: https://anaconda.org/singleronbio/scope-tools/badges/installer/conda.svg
    :target: https://anaconda.org/singleronbio/scope-tools
-
+.. |License| image:: https://anaconda.org/singleronbio/scope-tools/badges/license.svg
+   :target: https://anaconda.org/singleronbio/scope-tools
 
 ===============================
 
