@@ -8,24 +8,35 @@
 #. 示例数据
 
 
-    示例的样本数据存储于 `Open Science Framework`_. 目前已经上传SCOPEv2样本数据, 其余类型样本SCOPEv1, 10X, dropseq, indrop, BD Rhapsody待测试上传.
+    示例的样本数据存储于 `Open Science Framework`_.
 
-    .. _Open Science Framework: https://osf.io/792wz/?view_only=f0345853d9b141708be8a533d09ea93c
+    目前已经上传SCOPEv2样本数据, SCOPEv1样本数据, 其余类型样本TENX(10X), dropseq, indrop, BD Rhapsody待测试上传.
+
+    .. _Open Science Framework: https://osf.io/sb68z/?view_only=e63b4d53cb9447a7bd6df360eee34934
 
 #. 快速使用
 
     .. code-block:: bash
 
         scope run \
-            --fq1 \
-            --fq2 \
-            --outdir
-
+            --fq1 ./rawdata/R2005073_L1_1.fq.gz \
+            --fq2 ./rawdata/R2005073_L1_2.fq.gz \
+            --outdir ./ \
+            --bctype SCOPEv2 \
+            --annot ./references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf \
+            --refFlat ./references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.refFlat \
+            --genomeDir ./references/Homo_sapiens/Ensembl/GRCh38
+            --sample samplename
 
     * 参数说明
-
-        * --fq1：
-        * --fq2：
+        * --fq1：read1 fastq文件路径
+        * --fq2：read2 fastq文件路径
+        * --outdir: 输出路径
+        * --bctype: 预置的接头类型
+        * --annot: 基因组注释文件, gtf格式
+        * --refFlat: refFlat文件路径
+        * --genomeDir: 参考基因组路径, 包含STAR所建索引
+        * --sample: 样本名称
 
     * 示例报告
 
@@ -77,8 +88,8 @@
                 scope barcode \
                     --fq1 ./rawdata/R2005073_L1_1.fq.gz \
                     --fq2 ./rawdata/R2005073_L1_2.fq.gz \
-                    --sample scopev2 \
-                    --outdir ./scopev2 \
+                    --sample samplename \
+                    --outdir ./ \
                     --bctype SCOPEv2
 
         * 参数说明
@@ -110,9 +121,9 @@
             .. code-block:: bash
 
                 scope cutadapt \
-                    --fq ./scopev2/01.barcode/scopev2_2.fq.gz \
-                    --sample scopev2 \
-                    --outdir ./scopev2 \
+                    --fq ./samplename/01.barcode/samplename_2.fq.gz \
+                    --sample samplename \
+                    --outdir ./ \
                     --adapter p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC polyT=A{18} \
                     --overlap 5
 
@@ -138,9 +149,9 @@
             .. code-block:: bash
 
                 scope STAR \
-                    --fq ./scopev2/02.cutadapt/scopev2_2.fq.gz \
-                    --sample scopev2 \
-                    --outdir ./scopev2 \
+                    --fq ./samplename/02.cutadapt/samplename_2.fq.gz \
+                    --sample samplename \
+                    --outdir ./ \
                     --refFlat ./references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.refFlat \
                     --genomeDir ./references/Homo_sapiens/Ensembl/GRCh38
 
@@ -163,10 +174,10 @@
             .. code-block:: bash
 
                 scope featureCounts \
-                    --bam ./scopev2/03.STAR/scopev2_Aligned.sortedByCoord.out.bam \
+                    --bam ./samplename/03.STAR/samplename_Aligned.sortedByCoord.out.bam \
                     --annot ./references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf \
-                    --sample scopev2 \
-                    --outdir ./scopev2
+                    --sample samplename \
+                    --outdir ./
 
         * 参数说明
             * --bam: STAR比对并排序后的bam文件
@@ -195,10 +206,10 @@
             .. code-block:: bash
 
                 scope count \
-                    --bam ./scopev2/04.featureCounts/scopev2_name_sorted.bam \
+                    --bam ./samplename/04.featureCounts/samplename_name_sorted.bam \
                     --cells 3000 \
-                    --sample scopev2 \
-                    --outdir ./scopev2
+                    --sample samplename \
+                    --outdir ./
 
         * 参数说明
             * --bam: featureCounts输出的bam文件
@@ -216,8 +227,27 @@
 
     * run
 
-        描述
+        快速使用SCOPE-tools运行流程, 对数据进行分析.
 
         * 示例
+                .. code-block:: bash
+
+                    scope run \
+                        --fq1 ./rawdata/R2005073_L1_1.fq.gz \
+                        --fq2 ./rawdata/R2005073_L1_2.fq.gz \
+                        --outdir ./ \
+                        --bctype SCOPEv2 \
+                        --annot ./references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf \
+                        --refFlat ./references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.refFlat \
+                        --genomeDir ./references/Homo_sapiens/Ensembl/GRCh38
+                        --sample samplename
 
         * 参数说明
+            * --fq1：read1 fastq文件路径
+            * --fq2：read2 fastq文件路径
+            * --outdir: 输出路径
+            * --bctype: 预置的接头类型
+            * --annot: 基因组注释文件, gtf格式
+            * --refFlat: refFlat文件路径
+            * --genomeDir: 参考基因组路径, 包含STAR所建索引
+            * --sample: 样本名称

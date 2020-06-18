@@ -10,11 +10,12 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+from pathlib import Path
+import sys
 
-from ..scopetools import _version
+sys.path.insert(0, str(Path().resolve().parent / 'scopetools'))
+from _version import get_versions
+
 # -- Project information -----------------------------------------------------
 
 project = 'SCOPE-tools'
@@ -22,8 +23,8 @@ copyright = '2020, 新格元生物科技有限公司'
 author = '新格元生物科技有限公司'
 
 # The full version, including alpha/beta/rc tags
-version = _version
-release = _version
+version = get_versions()['version'].split('+')[0]
+release = get_versions()['version'].split('+')[0]
 
 # -- General configuration ---------------------------------------------------
 
