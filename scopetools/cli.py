@@ -3,9 +3,10 @@ from pathlib import Path
 
 import click
 
-from . import __version__
-from .utils import BarcodeType, AdapterType, MultipleOption, MutuallyExclusiveOption, str2path
+from ._version import get_versions
+from .utils import BarcodeType, AdapterType, MutuallyExclusiveOption, str2path
 
+__version__ = get_versions()['version']
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -39,7 +40,7 @@ def barcode_param(func):
 
 
 def cutadapt_param(func):
-    func = click.option('--adapter', cls=MultipleOption, type=AdapterType(), nargs=-1, default=['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'], help="adapter help")(func)
+    func = click.option('--adapter', type=AdapterType(), default=['A{18}'], multiple=True, help="adapter help")(func)
     func = click.option('--minimum-length', type=click.INT, default=20, show_default=True, help="minimum length help")(func)
     func = click.option('--nextseq-trim', type=click.INT, default=20, show_default=True, help="nextseq trim help")(func)
     func = click.option('--overlap', type=click.INT, default=5, show_default=True, help="overlap help")(func)
