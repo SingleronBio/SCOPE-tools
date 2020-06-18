@@ -54,7 +54,6 @@
               cutadapt       cutadapt short help
               featureCounts  featureCounts short help
               run            run short help
-
 #. 准备参照基因组
 
     * Homo sapiens
