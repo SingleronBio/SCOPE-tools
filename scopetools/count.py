@@ -37,7 +37,6 @@ class CellGeneUmiSummary(object):
         self.nth = None
         self.threshold = None
         self.valid_cell = None
-        self.saturations = downsample(self.seq_df)
         self.count_info = {}
         self.umi_info = {}
 
@@ -48,6 +47,7 @@ class CellGeneUmiSummary(object):
         self.matrix_gene_file = outdir / f'{self.sample}_genes.tsv'
 
         self.call_cells()
+        self.saturations = downsample(self.seq_df)
         self.plot_umi_cell()
         self.generate_matrix()
         self.generate_count_summary()
@@ -79,12 +79,12 @@ class CellGeneUmiSummary(object):
         self.cell_df = self.seq_df.pivot_table(
             index=['Barcode'],
             aggfunc={
-                'geneID': 'nunique',
                 'UMI': 'count',
-                'count': ['sum', lambda x: sum(x[x > 1])]
+                'count': 'sum',
+                'geneID': 'nunique'
             }
         )
-        self.cell_df.columns = ['UMI', 'UMI2', 'read_count', 'geneID']
+        self.cell_df.columns = ['UMI', 'read_count', 'geneID']
 
         self.nth = max(0, int(self.cell_num * 0.01) - 1)
         self.threshold = max(1, int(self.cell_df['UMI'].nlargest(self.nth)[-1] * 0.1))
