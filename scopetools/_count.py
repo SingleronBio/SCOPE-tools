@@ -9,7 +9,7 @@ def umi_reads_downsample(seq_df):
     :return: saturations
     """
     saturations = pd.DataFrame(columns=['percent', 'median_gene_num', 'saturation']).set_index('percent')
-    all_seq_df = seq_df.reset_index().set_index(['Barcode', 'geneID', 'UMI']).index.repeat(seq_df['count']).to_frame().set_index(['Barcode'])
+    all_seq_df = seq_df.reset_index().set_index(['Barcode', 'geneID', 'UMI', 'mark']).index.repeat(seq_df['count']).to_frame().set_index(['Barcode'])
     saturations.loc[0, :] = [0, 0]
     for i in range(1, 11):
         sample_df = all_seq_df.sample(frac=i / 10)
@@ -30,7 +30,7 @@ def umi_count_downsample(seq_df):
     :return: saturations
     """
     saturations = pd.DataFrame(columns=['percent', 'median_gene_num', 'saturation']).set_index('percent')
-    all_seq_df = seq_df.reset_index().set_index(['Barcode', 'geneID', 'UMI']).index.repeat(seq_df['count']).to_frame().set_index(['Barcode'])
+    all_seq_df = seq_df.reset_index().set_index(['Barcode', 'geneID', 'UMI', 'mark']).index.repeat(seq_df['count']).to_frame().set_index(['Barcode'])
     saturations.loc[0, :] = [0, 0]
     for i in range(1, 11):
         sample_df = all_seq_df.sample(frac=i / 10)
