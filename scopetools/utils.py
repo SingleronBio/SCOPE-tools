@@ -190,9 +190,9 @@ def str2path(ctx, param, value):
     :return: Path
     """
     if isinstance(value, str):
-        return Path(value)
+        return Path(value).resolve()
     elif isinstance(value, tuple):
-        return (Path(i) for i in value)
+        return (Path(i).resolve() for i in value)
     else:
         return value
 
