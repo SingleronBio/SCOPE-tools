@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-import os
-
+import matplotlib
 import pandas as pd
 import scanpy as sc
 
+import os
 from .report import Reporter
 from .utils import getlogger
 
+matplotlib.use('Agg')
 FILETYPE = ['png', 'pdf']
 CLUSTER_ALGORITHM = ['leiden', 'louvain']
 sc.settings.set_figure_params(dpi_save=150)
