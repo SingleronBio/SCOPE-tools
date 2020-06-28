@@ -25,7 +25,8 @@ def barcode(
         lowqual=None,
         lownum=None,
         whitelist=None,
-        linker=None
+        linker=None,
+        thread=None
 ):
     """
 
@@ -40,6 +41,7 @@ def barcode(
     :param lownum:
     :param whitelist:
     :param linker:
+    :param thread:
     :return:
     """
     logger.info('Extract barcode start!')
@@ -89,8 +91,8 @@ def barcode(
 
     with xopen(clean_fastq, mode='wt') as f:
         for fq1, fq2 in zip(fq1s, fq2s):
-            with dnaio.open(fq1) as f1, dnaio.open(fq2) as f2:
-                for seq1, seq2 in zip(f1, f2):
+            with dnaio.open(file1=fq1, file2=fq2) as g:
+                for seq1, seq2 in g:
                     Sequence.seq_info['total_num'] += 1
                     sequence = Sequence(
                         seq1=seq1,
@@ -141,7 +143,7 @@ def barcode(
 
     # fastqc
     logger.info('fastqc start!')
-    fastqc_cmd = f'fastqc -o {sample_outdir} {clean_fastq}'
+    fastqc_cmd = f'fastqc -t {thread} -o {sample_outdir} {clean_fastq}'
     logger.info(fastqc_cmd)
     fastqc_process = CommandWrapper(command=fastqc_cmd, logger=logger)
     if fastqc_process.returncode:

@@ -36,6 +36,7 @@ def barcode_param(func):
     func = click.option('--linker', cls=MutuallyExclusiveOption, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, mutually_exclusive=['bctype'], default=None, help="linkers")(func)
     func = click.option('--lowQual', type=click.IntRange(0, 30), default=14, show_default=True, help="max phred of base as low quality")(func)
     func = click.option('--lowNum', type=click.INT, default=2, show_default=True, help="max number with low quality allowed")(func)
+    func = click.option('--thread', type=click.INT, default=8, show_default=True, help="fastqc thread")(func)
     return func
 
 
@@ -101,7 +102,7 @@ def sample_pipe(ctx, sample, transcriptome, description, version, outdir, *args,
 @click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="outdir help")
 @click.pass_context
-def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, lowqual, lownum, *args, **kwargs):
+def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, lowqual, lownum, thread, *args, **kwargs):
     """
     extract barcode and umi description
     """
@@ -124,7 +125,7 @@ def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, link
     else:
         raise click.BadParameter("Error: Illegal usage: [bctype] or [pattern whitelist linkers] must have one")
     from .barcode import barcode
-    barcode(ctx=ctx, fq1s=fq1, fq2s=fq2, sample=sample, outdir=outdir, bctype=bctype, pattern=pattern, whitelist=whitelist, linker=linker, lowqual=lowqual, lownum=lownum)
+    barcode(ctx=ctx, fq1s=fq1, fq2s=fq2, sample=sample, outdir=outdir, bctype=bctype, pattern=pattern, whitelist=whitelist, linker=linker, lowqual=lowqual, lownum=lownum, thread=thread)
 
 
 @cli.command(name='cutadapt', short_help="cutadapt short help")
@@ -156,6 +157,7 @@ def star_pipe(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, run
 
 
 @cli.command(name='featureCounts', short_help="featureCounts short help")
+@featurecounts_param
 @click.option('--input', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="input help")
 @click.option('--annot', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), required=True, help="annot help")
 @click.option('--sample', type=click.STRING, required=True, help="sample help")

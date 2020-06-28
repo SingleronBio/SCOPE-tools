@@ -191,7 +191,6 @@ class SCOPEv1(Sequence):
 
     def __init__(self, *args, **kwargs):
         super(SCOPEv1, self).__init__(*args, **kwargs)
-        self.rna_sequence = self.correct_seq()
 
     @cached_property
     def corrected_cell(self):
@@ -226,7 +225,8 @@ class SCOPEv1(Sequence):
             ]
         )
 
-    def correct_seq(self):
+    @cached_property
+    def rna_sequence(self):
         if self.is_no_polyt:
             self.add_no_polyt_num()
             return None
@@ -309,7 +309,6 @@ class SCOPEv2(Sequence):
     ):
         super(SCOPEv2, self).__init__(*args, **kwargs)
         self._cell = ''
-        self.rna_sequence = self.correct_seq()
 
     @cached_property
     def linkers(self):
@@ -372,7 +371,8 @@ class SCOPEv2(Sequence):
             ]
         )
 
-    def correct_seq(self):
+    @cached_property
+    def rna_sequence(self):
         if self.is_no_polyt:
             self.add_no_polyt_num()
             return None
