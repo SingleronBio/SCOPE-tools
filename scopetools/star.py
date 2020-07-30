@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import re
 import sys
 
+import re
 from .report import Reporter
 from .utils import getlogger, CommandWrapper
 
@@ -13,7 +13,10 @@ class STARLogger(object):
     def __init__(self, star_log, picard_log, sample):
         self.star_log = star_log
         self.picard_log = picard_log
-        self.stat_info = {}
+        self.stat_info = {
+            'visible': {},
+            'invisible': {}
+        }
         self.plot = {}
         self.parse_star()
         self.parse_picard()
@@ -24,9 +27,9 @@ class STARLogger(object):
             uniquely_pattern = re.compile(r'Uniquely mapped reads\D*(\d*\.?\d*%?)', flags=re.S)
             multiple_pattern = re.compile(r'of reads mapped to too many loci\D*(\d*\.?\d*%?)', flags=re.S)
             i, j = uniquely_pattern.findall(lines)
-            self.stat_info['Uniquely_mapped'] = f'{i} ({j})'
+            self.stat_info['visible']['Uniquely_mapped'] = f'{i} ({j})'
             i, j = multiple_pattern.findall(lines)
-            self.stat_info['Multiple_mapped'] = f'{i} ({j})'
+            self.stat_info['visible']['Multiple_mapped'] = f'{i} ({j})'
 
     def parse_picard(self):
         with open(self.picard_log, mode='r', encoding='utf-8') as f:
@@ -37,16 +40,16 @@ class STARLogger(object):
                 attrs = match.groups()[0].split('\t')
                 vals = match.groups()[1].split('\t')
                 picard_dict = dict(zip(attrs, vals))
-                self.stat_info['Exonic_Regions'] = f'{int(picard_dict["CODING_BASES"]) + int(picard_dict["UTR_BASES"]):d} ({float(picard_dict["PCT_CODING_BASES"]) + float(picard_dict["PCT_UTR_BASES"]):.2%})'
-                self.stat_info['Intronic_Regions'] = f'{int(picard_dict["INTRONIC_BASES"]):d} ({float(picard_dict["PCT_INTRONIC_BASES"]):.2%})'
-                self.stat_info['Intergenic_Regions'] = f'{int(picard_dict["INTERGENIC_BASES"]):d} ({float(picard_dict["PCT_INTERGENIC_BASES"]):.2%})'
+                self.stat_info['visible']['Exonic_Regions'] = f'{int(picard_dict["CODING_BASES"]) + int(picard_dict["UTR_BASES"]):d} ({float(picard_dict["PCT_CODING_BASES"]) + float(picard_dict["PCT_UTR_BASES"]):.2%})'
+                self.stat_info['visible']['Intronic_Regions'] = f'{int(picard_dict["INTRONIC_BASES"]):d} ({float(picard_dict["PCT_INTRONIC_BASES"]):.2%})'
+                self.stat_info['visible']['Intergenic_Regions'] = f'{int(picard_dict["INTERGENIC_BASES"]):d} ({float(picard_dict["PCT_INTERGENIC_BASES"]):.2%})'
                 self.plot = {
                     'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
                     'region_values': [int(picard_dict["CODING_BASES"]), int(picard_dict["INTRONIC_BASES"]), int(picard_dict["INTERGENIC_BASES"])]
                 }
 
 
-def star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn):
+def star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn, debug):
     sample_outdir = outdir / sample / '03.STAR'
     sample_outdir.mkdir(parents=True, exist_ok=True)
 

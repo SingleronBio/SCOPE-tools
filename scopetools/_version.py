@@ -11,10 +11,11 @@
 """Git implementation of _version.py."""
 
 import errno
+import sys
+
 import os
 import re
 import subprocess
-import sys
 
 
 def get_keywords():

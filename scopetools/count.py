@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import csv
-from collections import defaultdict
 from itertools import groupby
-from ._count import umi_reads_downsample as downsample
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import pysam
 from scipy.io import mmwrite
 from scipy.sparse import coo_matrix
 
+import csv
+from collections import defaultdict
+from ._count import umi_reads_downsample as downsample
 from .report import Reporter
 from .utils import getlogger, cached_property
 
@@ -37,8 +38,14 @@ class CellGeneUmiSummary(object):
         self.nth = None
         self.threshold = None
         self.valid_cell = None
-        self.count_info = {}
-        self.umi_info = {}
+        self.count_info = {
+            'visible': {},
+            'invisible': {}
+        }
+        self.umi_info = {
+            'visible': {},
+            'invisible': {}
+        }
 
         self.pdf = outdir / 'barcode_filter_magnitude.pdf'
         self.marked_counts_file = outdir / f'{self.sample}_counts.csv'
@@ -136,7 +143,7 @@ class CellGeneUmiSummary(object):
             f"{int(self.reads_mapped_to_transcriptome / self.cell_describe.loc['count', 'read_count']):d}"
         ]
         for attr, val in zip(attrs, vals):
-            self.count_info[attr] = val
+            self.count_info['visible'][attr] = val
 
     def generate_umi_summary(self):
         attrs = [
@@ -159,7 +166,7 @@ class CellGeneUmiSummary(object):
         ]
 
         for attr, val in zip(attrs, vals):
-            self.umi_info[attr] = val
+            self.umi_info['visible'][attr] = val
 
 
 class Cell(object):
@@ -208,7 +215,7 @@ class Cell(object):
             self.gene_umi[gene] = _umis
 
 
-def count(ctx, bam, sample, outdir, cells):
+def count(ctx, bam, sample, outdir, cells, debug):
     sample_outdir = outdir / sample / '05.count'
     sample_outdir.mkdir(parents=True, exist_ok=True)
 

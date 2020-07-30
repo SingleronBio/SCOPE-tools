@@ -26,7 +26,8 @@ def barcode(
         lownum=None,
         whitelist=None,
         linker=None,
-        thread=None
+        thread=None,
+        debug=False
 ):
     """
 
@@ -42,6 +43,7 @@ def barcode(
     :param whitelist:
     :param linker:
     :param thread:
+    :param debug: 
     :return:
     """
     logger.info('Extract barcode start!')
