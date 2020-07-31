@@ -183,7 +183,6 @@ def featurecounts_pipe(ctx, input, annot, sample, outdir, format, nthreads, type
 @click.option('--bam', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, required=True, help="bam help")
 @click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="outdir help")
-@click.option('--cells', type=click.INT, default=3000, show_default=True, help="sample help")
 @click.pass_context
 def count_pipe(ctx, bam, sample, outdir, cells, debug, *args, **kwargs):
     """
