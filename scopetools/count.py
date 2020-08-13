@@ -3,6 +3,7 @@
 from itertools import groupby
 
 import matplotlib.pyplot as plt
+import matplotlib
 import pandas as pd
 import pysam
 from scipy.io import mmwrite
@@ -14,6 +15,7 @@ from ._count import umi_reads_downsample as downsample
 from .report import Reporter
 from .utils import getlogger, cached_property
 
+matplotlib.use('Agg')
 logger = getlogger(__name__)
 logger.setLevel(10)
 
