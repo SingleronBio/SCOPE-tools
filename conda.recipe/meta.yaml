@@ -2,8 +2,9 @@
 {% set data = load_setup_py_data() %}
 
 package:
-  name: scope-tools
-  version: {{ data['version'] }}
+  name: celescope
+#  version: {{ data['version'] }}
+  version: {{ GIT_DESCRIBE_TAG }}
 
 source:
   path: ..
@@ -14,8 +15,8 @@ build:
   # "skip: True  # [py<35]" (for example) to limit to Python 3.5 and newer, or
   # "skip: True  # [not win]" to limit to Windows.
   script: {{ PYTHON }} -m pip install --no-deps --ignore-installed -vv .
-  noarch: python
-  number: 2
+  number: {{ GIT_DESCRIBE_NUMBER }}
+  string: {{ GIT_BUILD_STR }}
   entry_points:
     {% for entry in data['entry_points']['console_scripts'] %}
       - {{ entry.split('=')[0].strip() }} = {{ entry.split('=')[1].strip() }}
