@@ -184,7 +184,7 @@ class SCOPEv1(Sequence):
             'visible': {
                 'Number of Reads': cls.seq_info['total_num'],
                 'Valid Reads': f'{cls.seq_info["clean_num"]} ({cls.seq_info["clean_num"] / cls.seq_info["total_num"]:.2%})',
-                'Valid Barcodes': len(cls.seq_info['ce`ll_dict']),
+                'Valid Barcodes': len(cls.seq_info['cell_dict']),
             },
             'invisible': {
                 'Barcode startwith N': f'{cls.seq_info["no_cell_num"]} ({cls.seq_info["no_cell_num"] / cls.seq_info["total_num"]:.2%})',
