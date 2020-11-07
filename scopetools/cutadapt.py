@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import re
 import sys
 
+import re
 from .report import Reporter
 from .utils import getlogger, CommandWrapper
 
@@ -13,7 +13,10 @@ class CutadaptLogger(object):
     def __init__(self, stdout, sample):
         self.stdout = stdout
         self.sample = sample
-        self.stat_info = {}
+        self.stat_info = {
+            'visible': {},
+            'invisible': {}
+        }
         self.parse()
 
     def parse(self):
@@ -26,12 +29,12 @@ class CutadaptLogger(object):
                     line = re.sub(pattern_space, ':', line)
                     line = line.replace(',', '')
                     attr, val = line.split(':')
-                    self.stat_info[attr] = val
+                    self.stat_info['visible'][attr] = val
         else:
             logger.warning(f'can not match cutadapt log')
 
 
-def cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread):
+def cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread, debug):
     adapter_para = ''
     for i, j in zip(['-a'] * len(adapter), adapter):
         adapter_para += f'{i} {j} '

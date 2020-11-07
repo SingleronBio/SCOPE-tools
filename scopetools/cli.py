@@ -24,6 +24,7 @@ def sample_param(func):
     func = click.option('--description', type=click.STRING, default='scRNA-Seq scope', show_default=True, help='description help')(func)
     func = click.option('--version', type=click.STRING, default=__version__, show_default=True, help='version help')(func)
     func = click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="output dir")(func)
+    func = click.option('--debug', type=click.BOOL, default=False, help="debug help")(func)
     return func
 
 
@@ -37,6 +38,7 @@ def barcode_param(func):
     func = click.option('--lowQual', type=click.IntRange(0, 30), default=14, show_default=True, help="max phred of base as low quality")(func)
     func = click.option('--lowNum', type=click.INT, default=2, show_default=True, help="max number with low quality allowed")(func)
     func = click.option('--thread', type=click.INT, default=8, show_default=True, help="fastqc thread")(func)
+    func = click.option('--debug', type=click.BOOL, default=False, help="debug help")(func)
     return func
 
 
@@ -46,6 +48,7 @@ def cutadapt_param(func):
     func = click.option('--nextseq-trim', type=click.INT, default=20, show_default=True, help="nextseq trim help")(func)
     func = click.option('--overlap', type=click.INT, default=5, show_default=True, help="overlap help")(func)
     func = click.option('--thread', type=click.INT, default=2, show_default=True, help="thread help")(func)
+    func = click.option('--debug', type=click.BOOL, default=False, help="debug help")(func)
     return func
 
 
@@ -54,6 +57,7 @@ def star_param(func):
     func = click.option('--genomeDir', type=click.Path(file_okay=False, dir_okay=True, readable=True), callback=str2path, required=True, help="genome help")(func)
     func = click.option('--readFilesCommand', type=click.Choice(['zcat', 'bzcat', '-']), default='zcat', show_default=True, help='readFilesCommand help')(func)
     func = click.option('--runThreadN', type=click.INT, default=2, show_default=True, help='runThreadN help')(func)
+    func = click.option('--debug', type=click.BOOL, default=False, help="debug help")(func)
     return func
 
 
@@ -62,11 +66,13 @@ def featurecounts_param(func):
     func = click.option('--format', type=click.Choice(['SAM', 'BAM', 'CORE']), default='BAM', show_default=True, help="format help")(func)
     func = click.option('--nthreads', type=click.IntRange(1, 32), default=2, show_default=True, help="nthreads help")(func)
     func = click.option('--type', type=click.STRING, default='exon', show_default=True, help="specify feature type in GTF annotation")(func)
+    func = click.option('--debug', type=click.BOOL, default=False, help="debug help")(func)
     return func
 
 
 def count_param(func):
     func = click.option('--cells', type=click.INT, default=3000, show_default=True, help="sample help")(func)
+    func = click.option('--debug', type=click.BOOL, default=False, help="debug help")(func)
     return func
 
 
@@ -82,6 +88,7 @@ def cluster_param(func):
     func = click.option('--max_value', type=click.FLOAT, default=None, show_default=True, help="Clip (truncate) to this value after scaling")(func)
     func = click.option('--n_neighbors', type=click.IntRange(2, 100), default=15, show_default=True, help="The size of local neighborhood (in terms of number of neighboring data points) used for manifold approximation")(func)
     func = click.option('--n_pcs', type=click.INT, default=None, show_default=True, help="Use this many PCs")(func)
+    func = click.option('--debug', type=click.BOOL, default=False, help="debug help")(func)
     return func
 
 
@@ -89,12 +96,12 @@ def cluster_param(func):
 @sample_param
 @click.option('--transcriptome', type=click.STRING, default='Unspecified', required=True, help="sample help")
 @click.pass_context
-def sample_pipe(ctx, sample, transcriptome, description, version, outdir, *args, **kwargs):
+def sample_pipe(ctx, sample, transcriptome, description, version, outdir, debug, *args, **kwargs):
     """
     sample description
     """
     from .sample_description import sample_description
-    sample_description(ctx, sample, transcriptome, description, version, outdir)
+    sample_description(ctx, sample, transcriptome, description, version, outdir, debug)
 
 
 @cli.command(name='barcode', short_help="extract barcode and umi short help")
@@ -102,7 +109,7 @@ def sample_pipe(ctx, sample, transcriptome, description, version, outdir, *args,
 @click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="outdir help")
 @click.pass_context
-def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, lowqual, lownum, thread, *args, **kwargs):
+def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, lowqual, lownum, thread, debug, *args, **kwargs):
     """
     extract barcode and umi description
     """
@@ -125,7 +132,7 @@ def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, link
     else:
         raise click.BadParameter("Error: Illegal usage: [bctype] or [pattern whitelist linkers] must have one")
     from .barcode import barcode
-    barcode(ctx=ctx, fq1s=fq1, fq2s=fq2, sample=sample, outdir=outdir, bctype=bctype, pattern=pattern, whitelist=whitelist, linker=linker, lowqual=lowqual, lownum=lownum, thread=thread)
+    barcode(ctx=ctx, fq1s=fq1, fq2s=fq2, sample=sample, outdir=outdir, bctype=bctype, pattern=pattern, whitelist=whitelist, linker=linker, lowqual=lowqual, lownum=lownum, thread=thread, debug=debug)
 
 
 @cli.command(name='cutadapt', short_help="cutadapt short help")
@@ -134,12 +141,12 @@ def barcode_pipe(ctx, fq1, fq2, sample, outdir, bctype, pattern, whitelist, link
 @click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="outdir help")
 @click.pass_context
-def cutadapt_pipe(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread, *args, **kwargs):
+def cutadapt_pipe(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread, debug, *args, **kwargs):
     """
     cutadapt description
     """
     from .cutadapt import cutadapt
-    cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread)
+    cutadapt(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim, overlap, thread, debug)
 
 
 @cli.command(name="STAR", short_help="STAR short help")
@@ -148,12 +155,12 @@ def cutadapt_pipe(ctx, fq, sample, outdir, adapter, minimum_length, nextseq_trim
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="outdir help")
 @click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.pass_context
-def star_pipe(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn, *args, **kwargs):
+def star_pipe(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn, debug, *args, **kwargs):
     """
     STAR description
     """
     from .star import star
-    star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn)
+    star(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, runthreadn, debug)
 
 
 @cli.command(name='featureCounts', short_help="featureCounts short help")
@@ -163,12 +170,12 @@ def star_pipe(ctx, fq, refflat, genomedir, sample, outdir, readfilescommand, run
 @click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="outdir help")
 @click.pass_context
-def featurecounts_pipe(ctx, input, annot, sample, outdir, format, nthreads, type, *args, **kwargs):
+def featurecounts_pipe(ctx, input, annot, sample, outdir, format, nthreads, type, debug, *args, **kwargs):
     """
     featureCounts description
     """
     from .featurecounts import featurecounts
-    featurecounts(ctx, input, annot, sample, outdir, format, nthreads, type)
+    featurecounts(ctx, input, annot, sample, outdir, format, nthreads, type, debug)
 
 
 @cli.command(name='count', short_help="count short help")
@@ -176,14 +183,13 @@ def featurecounts_pipe(ctx, input, annot, sample, outdir, format, nthreads, type
 @click.option('--bam', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, required=True, help="bam help")
 @click.option('--sample', type=click.STRING, required=True, help="sample help")
 @click.option('--outdir', type=click.Path(file_okay=False, dir_okay=True, writable=True), callback=str2path, required=True, help="outdir help")
-@click.option('--cells', type=click.INT, default=3000, show_default=True, help="sample help")
 @click.pass_context
-def count_pipe(ctx, bam, sample, outdir, cells, *args, **kwargs):
+def count_pipe(ctx, bam, sample, outdir, cells, debug, *args, **kwargs):
     """
     count description
     """
     from .count import count
-    count(ctx, bam, sample, outdir, cells)
+    count(ctx, bam, sample, outdir, cells, debug)
 
 
 @cli.command(name='cluster', short_help="cluster short help")
@@ -194,13 +200,13 @@ def count_pipe(ctx, bam, sample, outdir, cells, *args, **kwargs):
 @click.option('--barcodes', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, required=True, help="barcodes help")
 @click.option('--genes', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True), callback=str2path, required=True, help="genes help")
 @click.pass_context
-def cluster_pipe(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs, *args, **kwargs):
+def cluster_pipe(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs, debug, *args, **kwargs):
     """
     cluster description
     """
     click.echo('cluster pipeline')
     from .cluster import cluster
-    cluster(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs)
+    cluster(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs, debug)
 
 
 @cli.command(name='run', help="run short help")
@@ -212,7 +218,7 @@ def cluster_pipe(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes,
 @count_param
 @cluster_param
 @click.pass_context
-def run_pipe(ctx, description, version, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, lowqual, lownum, adapter, minimum_length, nextseq_trim, overlap, thread, refflat, genomedir, readfilescommand, runthreadn, annot, format, nthreads, type, cells, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs, *args, **kwargs):
+def run_pipe(ctx, description, version, fq1, fq2, sample, outdir, bctype, pattern, whitelist, linker, lowqual, lownum, adapter, minimum_length, nextseq_trim, overlap, thread, refflat, genomedir, readfilescommand, runthreadn, annot, format, nthreads, type, cells, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs, debug, *args, **kwargs):
     """
     run description
     """

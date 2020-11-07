@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-import logging
-import re
-import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import click
+
+import logging
+import re
+import subprocess
 
 
 class BarcodeType(click.ParamType):

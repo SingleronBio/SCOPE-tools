@@ -17,7 +17,7 @@ logger = getlogger(__name__)
 logger.setLevel(10)
 
 
-def cluster(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs):
+def cluster(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_cells, n_genes_by_counts, pct_counts_mt, exclude_highly_expressed, max_fraction, n_top_genes, max_value, n_neighbors, n_pcs, debug):
     sample_outdir = outdir / sample / '06.cluster'
     sample_outdir.mkdir(parents=True, exist_ok=True)
     os.chdir(sample_outdir)
@@ -72,7 +72,10 @@ def cluster(ctx, matrix, outdir, sample, barcodes, genes, n_top, min_genes, min_
 
     logger.info('cluster done!')
 
-    stat_info = {}
+    stat_info = {
+        'visible': {},
+        'invisible': {}
+    }
     img = {}
     pngs = (sample_outdir / 'figures').rglob('*.png')
     for png in pngs:

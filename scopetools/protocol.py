@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import re
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple
 
 import dnaio
 
+import re
+from collections import defaultdict
 from .utils import cached_property, getlogger
 
 logger = getlogger(__name__)
@@ -181,12 +181,16 @@ class SCOPEv1(Sequence):
     @classmethod
     def stat_info(cls):
         return {
-            'Number of Reads': cls.seq_info['total_num'],
-            'Valid Reads': f'{cls.seq_info["clean_num"]} ({cls.seq_info["clean_num"] / cls.seq_info["total_num"]:.2%})',
-            'Valid Barcodes': len(cls.seq_info['cell_dict']),
-            'Reads without polyT': f'{cls.seq_info["no_polyt_num"]} ({cls.seq_info["no_polyt_num"] / cls.seq_info["total_num"]:.2%})',
-            'Reads with lowQual': f'{cls.seq_info["lowqual_num"]} ({cls.seq_info["lowqual_num"] / cls.seq_info["total_num"]:.2%})',
-            'Barcode startwith N': f'{cls.seq_info["no_cell_num"]} ({cls.seq_info["no_cell_num"] / cls.seq_info["total_num"]:.2%})',
+            'visible': {
+                'Number of Reads': cls.seq_info['total_num'],
+                'Valid Reads': f'{cls.seq_info["clean_num"]} ({cls.seq_info["clean_num"] / cls.seq_info["total_num"]:.2%})',
+                'Valid Barcodes': len(cls.seq_info['cell_dict']),
+            },
+            'invisible': {
+                'Barcode startwith N': f'{cls.seq_info["no_cell_num"]} ({cls.seq_info["no_cell_num"] / cls.seq_info["total_num"]:.2%})',
+                'Reads with lowQual': f'{cls.seq_info["lowqual_num"]} ({cls.seq_info["lowqual_num"] / cls.seq_info["total_num"]:.2%})',
+                'Reads without polyT': f'{cls.seq_info["no_polyt_num"]} ({cls.seq_info["no_polyt_num"] / cls.seq_info["total_num"]:.2%})'
+            }
         }
 
     def __init__(self, *args, **kwargs):
@@ -292,14 +296,18 @@ class SCOPEv2(Sequence):
     @classmethod
     def stat_info(cls):
         return {
-            'Number of Reads': cls.seq_info['total_num'],
-            'Valid Reads': f'{cls.seq_info["clean_num"]} ({cls.seq_info["clean_num"] / cls.seq_info["total_num"]:.2%})',
-            'Valid Barcodes': len(cls.seq_info['cell_dict']),
-            'Reads without polyT': f'{cls.seq_info["no_polyt_num"]} ({cls.seq_info["no_polyt_num"] / cls.seq_info["total_num"]:.2%})',
-            'Reads with lowQual': f'{cls.seq_info["lowqual_num"]} ({cls.seq_info["lowqual_num"] / cls.seq_info["total_num"]:.2%})',
-            'Reads without linker': f'{cls.seq_info["no_linker_num"]} ({cls.seq_info["no_linker_num"] / cls.seq_info["total_num"]:.2%})',
-            'Reads without Barcode': f'{cls.seq_info["no_cell_num"]} ({cls.seq_info["no_cell_num"] / cls.seq_info["total_num"]:.2%})',
-            'Reads with corrected Barcode': f'{cls.seq_info["cell_corrected_num"]} ({cls.seq_info["cell_corrected_num"] / cls.seq_info["total_num"]:.2%})',
+            'visible': {
+                'Number of Reads': cls.seq_info['total_num'],
+                'Valid Reads': f'{cls.seq_info["clean_num"]} ({cls.seq_info["clean_num"] / cls.seq_info["total_num"]:.2%})',
+                'Valid Barcodes': len(cls.seq_info['cell_dict']),
+                'Reads with corrected Barcode': f'{cls.seq_info["cell_corrected_num"]} ({cls.seq_info["cell_corrected_num"] / cls.seq_info["total_num"]:.2%})'
+            },
+            'invisible': {
+                'Reads without polyT': f'{cls.seq_info["no_polyt_num"]} ({cls.seq_info["no_polyt_num"] / cls.seq_info["total_num"]:.2%})',
+                'Reads with lowQual': f'{cls.seq_info["lowqual_num"]} ({cls.seq_info["lowqual_num"] / cls.seq_info["total_num"]:.2%})',
+                'Reads without linker': f'{cls.seq_info["no_linker_num"]} ({cls.seq_info["no_linker_num"] / cls.seq_info["total_num"]:.2%})',
+                'Reads without Barcode': f'{cls.seq_info["no_cell_num"]} ({cls.seq_info["no_cell_num"] / cls.seq_info["total_num"]:.2%})'
+            }
         }
 
     def __init__(

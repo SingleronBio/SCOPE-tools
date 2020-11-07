@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import re
 import sys
-from collections import defaultdict
 from pathlib import Path
 
 import pysam
 
+import re
+from collections import defaultdict
 from .report import Reporter
 from .utils import getlogger, CommandWrapper
 
@@ -47,7 +47,10 @@ class GeneName(object):
 class FeatureCountsLogger(object):
     def __init__(self, log, sample):
         self.log = log
-        self.stat_info = {}
+        self.stat_info = {
+            'visible': {},
+            'invisible': {}
+        }
         self.parse_log()
 
     def parse_log(self):
@@ -60,7 +63,7 @@ class FeatureCountsLogger(object):
                 pattern = re.compile(f'(?<={p})\D*(\d*)')
                 vals.append(int(pattern.findall(lines)[0]))
             for attr, val in zip(attrs, vals):
-                self.stat_info[attr] = f'{val} ({val / sum(vals):.2%})'
+                self.stat_info['visible'][attr] = f'{val} ({val / sum(vals):.2%})'
 
 
 class Alignment(object):
@@ -86,7 +89,7 @@ class Alignment(object):
         self.alignment.set_tag('XT', self.__gene_name)
 
 
-def featurecounts(ctx, input, annot, sample, outdir, format, nthreads, type):
+def featurecounts(ctx, input, annot, sample, outdir, format, nthreads, type, debug):
     sample_outdir = outdir / sample / '04.featureCounts'
     sample_outdir.mkdir(parents=True, exist_ok=True)
 
