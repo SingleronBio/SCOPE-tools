@@ -11,7 +11,7 @@ from scipy.sparse import coo_matrix
 
 import csv
 from collections import defaultdict
-from ._count import umi_reads_downsample as downsample
+from ._count import umi_count_downsample as downsample
 from .report import Reporter
 from .utils import getlogger, cached_property
 
@@ -95,7 +95,7 @@ class CellGeneUmiSummary(object):
         )
         self.cell_df.columns = ['UMI', 'read_count', 'geneID']
 
-        self.nth = max(0, int(self.cell_num * 0.01) - 1)
+        self.nth = max(0, int(self.cell_num * 0.03) - 1)
         self.threshold = max(1, int(self.cell_df['UMI'].nlargest(self.nth)[-1] * 0.1))
         self.valid_cell = self.cell_df[self.cell_df['UMI'] > self.threshold].index
 
